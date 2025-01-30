@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.tests.mocks.dao.mail
+package io.felipepoliveira.fpmtoolkit.tests.mocks.mail
 
 import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailContentType
 import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailRecipient
@@ -12,5 +12,6 @@ class MockedMailSenderProvider : MailSenderProvider {
         vararg mailRecipients: MailRecipient
     ) {
         println("Sending mocked mail: $title")
+        println(String(body))
     }
 }

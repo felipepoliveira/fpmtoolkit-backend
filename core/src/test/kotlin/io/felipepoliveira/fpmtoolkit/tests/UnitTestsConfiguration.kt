@@ -4,7 +4,7 @@ package io.felipepoliveira.fpmtoolkit.tests
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
 import io.felipepoliveira.fpmtoolkit.features.users.UserMail
 import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
-import io.felipepoliveira.fpmtoolkit.tests.mocks.dao.mail.MockedMailSenderProvider
+import io.felipepoliveira.fpmtoolkit.tests.mocks.mail.MockedMailSenderProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.ComponentScans
