@@ -11,6 +11,10 @@ import javax.sql.DataSource
  * interface and this interface should be injected on the other components of the application.
  */
 interface ContextualBeans {
+    /**
+     * Return the authentication token used in the token signature
+     */
+    fun authenticationTokenSecretKey(): ByteArray
 
     /**
      * Return the DataSource used in the JPA implementation for the DAO interface

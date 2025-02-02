@@ -2,7 +2,7 @@ package io.felipepoliveira.fpmtoolkit.features.users
 
 import io.felipepoliveira.fpmtoolkit.BaseService
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
-import io.felipepoliveira.fpmtoolkit.BusinessRulesErrors
+import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.features.users.dto.CreateUserDTO
 import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.users.dto.FindByPrimaryEmailAndPasswordDTO
 import io.felipepoliveira.fpmtoolkit.security.PasswordRank
@@ -43,7 +43,7 @@ class UserService @Autowired constructor(
         // check for unsafe password
         if (!calculatePasswordRank(dto.password).isAtLeast(PasswordRank.Acceptable)) {
             throw BusinessRuleException(
-                BusinessRulesErrors.InvalidPassword,
+                BusinessRulesError.InvalidPassword,
                 reason = "The given password is not acceptable by the security standards"
             )
         }
@@ -51,7 +51,7 @@ class UserService @Autowired constructor(
         // check for duplicated email
         if (userDAO.findByPrimaryEmail(dto.primaryEmail) != null) {
             throw BusinessRuleException(
-                BusinessRulesErrors.InvalidEmail,
+                BusinessRulesError.InvalidEmail,
                 "The given email is already in use"
             )
         }
@@ -89,7 +89,7 @@ class UserService @Autowired constructor(
         }
 
         val userNotFoundException = BusinessRuleException(
-            error = BusinessRulesErrors.NotFound,
+            error = BusinessRulesError.NotFound,
             reason = "User not found"
         )
 
@@ -107,7 +107,7 @@ class UserService @Autowired constructor(
      */
     fun findByUuid(uuid: UUID): UserModel {
         return userDAO.findByUuid(uuid) ?: throw BusinessRuleException(
-            BusinessRulesErrors.NotFound,
+            BusinessRulesError.NotFound,
             "User identified by UUID $uuid not found"
         )
     }

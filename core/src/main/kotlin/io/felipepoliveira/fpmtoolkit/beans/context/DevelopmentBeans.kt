@@ -10,6 +10,8 @@ import java.util.*
 import javax.sql.DataSource
 
 class DevelopmentBeans : ContextualBeans {
+    override fun authenticationTokenSecretKey(): ByteArray = "authenticationTokenSecretKey".toByteArray()
+
     override fun jpaDataSource(): DataSource {
         val config = HikariConfig()
         config.jdbcUrl = "jdbc:mysql://localhost:3306/fpmtoolkit?createDatabaseIfNotExist=true&autoReconnect=true&useSSL=false&useUnicode=yes&characterEncoding=UTF-8&allowPublicKeyRetrieval=true"

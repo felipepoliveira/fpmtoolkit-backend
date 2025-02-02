@@ -6,7 +6,7 @@ import java.lang.Exception
 
 
 class BusinessRuleException(
-    val error: BusinessRulesErrors,
+    val error: BusinessRulesError,
     val reason: String,
     val details: Map<String, String>? = null
 ) : Exception(reason) {
@@ -15,11 +15,11 @@ class BusinessRuleException(
      * Create an easy-to-use constructor for a BusinessRuleException based on the data of a BindingResult
      */
     constructor(bindingResult: BindingResult, reason: String = "Validation error") :
-            this(BusinessRulesErrors.Validation, reason, bindingResult.toMap())
+            this(BusinessRulesError.Validation, reason, bindingResult.toMap())
 
 }
 
-enum class BusinessRulesErrors {
+enum class BusinessRulesError {
     InvalidEmail,
     InvalidPassword,
     NotFound,

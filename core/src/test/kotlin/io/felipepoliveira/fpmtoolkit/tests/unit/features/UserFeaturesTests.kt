@@ -1,13 +1,12 @@
 package io.felipepoliveira.fpmtoolkit.tests.unit.features
 
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
-import io.felipepoliveira.fpmtoolkit.BusinessRulesErrors
+import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import io.felipepoliveira.fpmtoolkit.features.users.dto.CreateUserDTO
 import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.users.dto.FindByPrimaryEmailAndPasswordDTO
 import io.felipepoliveira.fpmtoolkit.security.comparePassword
-import io.felipepoliveira.fpmtoolkit.security.hashPassword
 import io.felipepoliveira.fpmtoolkit.tests.UnitTestsConfiguration
 import io.felipepoliveira.fpmtoolkit.tests.mocks.dao.MockedUserDAO
 import io.kotest.assertions.throwables.shouldThrow
@@ -60,7 +59,7 @@ class CreateUserTests @Autowired constructor(
         val exception = shouldThrow<BusinessRuleException> { userService.createUser(dto) }
 
         // Assert
-        exception.error shouldBe BusinessRulesErrors.InvalidEmail
+        exception.error shouldBe BusinessRulesError.InvalidEmail
     }
 
     test("Test if fails when using a unsafe password") {
@@ -76,7 +75,7 @@ class CreateUserTests @Autowired constructor(
         val exception = shouldThrow<BusinessRuleException> { userService.createUser(dto) }
 
         // Assert
-        exception.error shouldBe BusinessRulesErrors.InvalidPassword
+        exception.error shouldBe BusinessRulesError.InvalidPassword
     }
 
     test("Test if fails when using invalid values on DTO") {
@@ -92,7 +91,7 @@ class CreateUserTests @Autowired constructor(
         val exception = shouldThrow<BusinessRuleException> { userService.createUser(dto) }
 
         // Assert
-        exception.error shouldBe BusinessRulesErrors.Validation
+        exception.error shouldBe BusinessRulesError.Validation
         val details = exception.details.shouldNotBeNull()
         details.shouldContainKeys("primaryEmail")
         details.shouldContainKeys("presentationName")
@@ -136,7 +135,7 @@ class FindByPrimaryEmailAndPasswordTests @Autowired constructor(
         val exception = shouldThrow<BusinessRuleException> { userService.findByPrimaryEmailAndPassword(dto) }
 
         // Assert
-        exception.error shouldBe BusinessRulesErrors.NotFound
+        exception.error shouldBe BusinessRulesError.NotFound
     }
 
     test("Test if fails when using a invalid password") {
@@ -150,7 +149,7 @@ class FindByPrimaryEmailAndPasswordTests @Autowired constructor(
         val exception = shouldThrow<BusinessRuleException> { userService.findByPrimaryEmailAndPassword(dto) }
 
         // Assert
-        exception.error shouldBe BusinessRulesErrors.NotFound
+        exception.error shouldBe BusinessRulesError.NotFound
     }
 
     test("Test if fails when data is invalid") {
@@ -164,7 +163,7 @@ class FindByPrimaryEmailAndPasswordTests @Autowired constructor(
         val exception = shouldThrow<BusinessRuleException> { userService.findByPrimaryEmailAndPassword(dto) }
 
         // Assert
-        exception.error shouldBe BusinessRulesErrors.Validation
+        exception.error shouldBe BusinessRulesError.Validation
         val errorDetails = exception.details.shouldNotBeNull()
         errorDetails.shouldContainKeys("primaryEmail", "password")
     }

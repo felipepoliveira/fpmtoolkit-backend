@@ -8,11 +8,23 @@ plugins {
     // you allow these classes to be extended and overridden by proxy classes, ensuring proper functionality
     // with Spring and Hibernate.
     id("org.jetbrains.kotlin.plugin.allopen") version "1.9.20"
+
+    //    The no-arg compiler plugin generates an additional zero-argument constructor for classes with a specific annotation.
+    //    The generated constructor is synthetic, so it can't be directly called from Java or Kotlin, but it can be called using reflection.
+    //    This allows the Java Persistence API (JPA) to instantiate a class although it doesn't have the zero-parameter constructor
+    //    from Kotlin or Java point of view (see the description of kotlin-jpa plugin below).
+    kotlin("plugin.noarg") version "2.0.20"
 }
 
 allOpen {
     // Marks all below to be all open
     annotation("org.springframework.context.annotation.Configuration")
+    annotation("org.springframework.stereotype.Repository")
+    annotation("org.springframework.stereotype.Service")
+}
+
+noArg {
+    annotation("jakarta.persistence.Entity")
 }
 
 repositories {
@@ -20,6 +32,9 @@ repositories {
 }
 
 dependencies {
+
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
 
     // Hibernate Core Relocation
     // Hibernate's core ORM functionality
