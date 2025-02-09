@@ -1,6 +1,6 @@
-package io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.commons.io
+package io.felipepoliveira.fpmtoolkit.commons.io
 
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
+import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import java.io.InputStream
 
 fun getResourceAsInputStream(resourcePath: String): InputStream {

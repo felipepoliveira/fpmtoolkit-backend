@@ -1,8 +1,8 @@
 package io.felipepoliveira.fpmtoolkit.tests.mocks.mail
 
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailContentType
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailRecipient
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
+import io.felipepoliveira.fpmtoolkit.mail.MailContentType
+import io.felipepoliveira.fpmtoolkit.mail.MailRecipient
+import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
 
 class MockedMailSenderProvider : MailSenderProvider {
     override fun sendMail(

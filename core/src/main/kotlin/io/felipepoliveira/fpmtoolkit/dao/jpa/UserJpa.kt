@@ -17,7 +17,7 @@ class UserJpa : BaseJpa<Long, UserModel>(), UserDAO {
             .fetchFirst()
     }
 
-    override fun findByUuid(uuid: UUID): UserModel? {
+    override fun findByUuid(uuid: String): UserModel? {
         return query("user").where("user.uuid = :uuid")
             .prepare().setParameter("uuid", uuid)
             .fetchFirst()

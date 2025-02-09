@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail
+package io.felipepoliveira.fpmtoolkit.mail
 
 /**
  * Default abstraction for mail sender provider module

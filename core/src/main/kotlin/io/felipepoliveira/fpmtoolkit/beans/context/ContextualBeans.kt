@@ -1,7 +1,8 @@
 package io.felipepoliveira.fpmtoolkit.beans.context
 
+import io.felipepoliveira.fpmtoolkit.cache.CacheHandler
 import io.felipepoliveira.fpmtoolkit.features.users.UserMail
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
+import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
 import java.util.Properties
 import javax.sql.DataSource
 
@@ -12,9 +13,24 @@ import javax.sql.DataSource
  */
 interface ContextualBeans {
     /**
-     * Return the authentication token used in the token signature
+     * Return the authentication token private signature key
      */
     fun authenticationTokenSecretKey(): ByteArray
+
+    /**
+     * The cache handler implementation used in this context
+     */
+    fun cacheHandler(): CacheHandler
+
+    /**
+     * Return the primary email change token private signature key
+     */
+    fun primaryEmailChangeTokenSecretKey(): ByteArray
+
+    /**
+     * Return the primary email confirmation token private signature key
+     */
+    fun primaryEmailConfirmationTokenSecretKey(): ByteArray
 
     /**
      * Return the DataSource used in the JPA implementation for the DAO interface
@@ -26,6 +42,11 @@ interface ContextualBeans {
      * Return the properties used in the JPA implementation for the DAO interface
      */
     fun jpaProperties(): Properties
+
+    /**
+     * Return the password recovery token private signature key
+     */
+    fun passwordRecoveryTokenSecretKey(): ByteArray
 
     /**
      * Return the instance used to handle user mail delivery for user mail

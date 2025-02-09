@@ -13,6 +13,6 @@ interface UserDAO : DAO<Long, UserModel> {
     /**
      * Find a UserModel identified by its UUID. If the user is not found return null instead
      */
-    fun findByUuid(uuid: UUID): UserModel?
+    fun findByUuid(uuid: String): UserModel?
 
 }

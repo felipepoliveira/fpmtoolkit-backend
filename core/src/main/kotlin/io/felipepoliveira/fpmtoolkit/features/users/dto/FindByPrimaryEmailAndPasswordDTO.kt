@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.users.dto
+package io.felipepoliveira.fpmtoolkit.features.users.dto
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

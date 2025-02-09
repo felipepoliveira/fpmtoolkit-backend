@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
+import io.felipepoliveira.fpmtoolkit.security.tokens.TokensMetadata
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.UUID
@@ -66,7 +67,7 @@ class ApiAuthenticationTokenProvider(
             issuedAt = issuedAt,
             expiresAt = expiresAt,
             clientIdentifier = clientIdentifier,
-            userIdentifier = user.uuid,
+            userIdentifier = UUID.fromString(user.uuid),
             roles = roles,
         )
 

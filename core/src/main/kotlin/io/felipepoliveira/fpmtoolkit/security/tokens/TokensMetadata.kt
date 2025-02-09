@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.api.security.tokens
+package io.felipepoliveira.fpmtoolkit.security.tokens
 
 class TokensMetadata {
     companion object {

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmação de E-mail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .message {
+            font-size: 16px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .code {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">Confirmação de E-mail</div>
+    <p class="message">Olá, {{user.presentationName}}. Para confirmar seu e-mail clique no botão abaixo.</p>
+    <a href="{{confirmationUrl}}" class="button">Confirmar E-mail</a>
+    <p class="footer">Se você não solicitou esta alteração, ignore este e-mail.</p>
+</div>
+</body>
+</html>

@@ -15,6 +15,7 @@ plugins {
 
 allOpen {
     annotation("org.springframework.context.annotation.Configuration")
+    annotation("org.springframework.web.bind.annotation.RestController")
 }
 
 repositories {

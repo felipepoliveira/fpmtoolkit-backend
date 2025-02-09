@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 
 /**
  * Parse the given Array<String> into a MutableCollection<GrantedAuthority> where each given role is added
@@ -85,17 +86,17 @@ class RequestClient(
 
         // Consider a SAME SESSION situation where the user created a session in the same day = 12 hours
         if (sessionDuration.toHours() < 12) {
-            roles.add(SimpleGrantedAuthority("ROLE_STL_${SecurityTierLevel.SAME_SESSION}"))
+            roles.add(SimpleGrantedAuthority(Roles.STL_SAME_SESSION))
         }
 
         // Safe STL = Session of at least 1 hour
         if (sessionDuration.toHours() < 1) {
-            roles.add(SimpleGrantedAuthority("ROLE_STL_${SecurityTierLevel.SECURE}"))
+            roles.add(SimpleGrantedAuthority(Roles.STL_SECURE))
         }
 
         // Most safe STL = Session of at least 5 minutes
         if (sessionDuration.toMinutes() < 5) {
-            roles.add(SimpleGrantedAuthority("ROLE_STL_${SecurityTierLevel.MOST_SECURE}"))
+            roles.add(SimpleGrantedAuthority(Roles.STL_MOST_SECURE))
         }
     }
 

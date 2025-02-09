@@ -2,15 +2,33 @@ package io.felipepoliveira.fpmtoolkit.beans.context
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.felipepoliveira.fpmtoolkit.cache.CacheHandler
+import io.felipepoliveira.fpmtoolkit.cache.RedisCacheHandler
 import io.felipepoliveira.fpmtoolkit.features.users.UserMail
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.FileSystemMockedMailSender
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
+import io.felipepoliveira.fpmtoolkit.mail.FileSystemMockedMailSender
+import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
+import redis.clients.jedis.JedisPool
+import redis.clients.jedis.JedisPoolConfig
 import java.io.File
 import java.util.*
 import javax.sql.DataSource
 
 class DevelopmentBeans : ContextualBeans {
     override fun authenticationTokenSecretKey(): ByteArray = "authenticationTokenSecretKey".toByteArray()
+
+    override fun cacheHandler(): CacheHandler {
+        val poolConfig = JedisPoolConfig().apply {
+            maxTotal = 10  // Max connections in the pool
+            maxIdle = 5    // Max idle connections
+            minIdle = 2    // Min idle connections
+            blockWhenExhausted = true
+            testOnBorrow = true
+        }
+
+        // Initialize the JedisPool with Redis server details
+        return RedisCacheHandler(JedisPool(poolConfig, "localhost", 6379))
+    }
+
 
     override fun jpaDataSource(): DataSource {
         val config = HikariConfig()
@@ -35,6 +53,12 @@ class DevelopmentBeans : ContextualBeans {
 
         return properties
     }
+
+    override fun passwordRecoveryTokenSecretKey(): ByteArray = "passwordRecoveryTokenSecretKey".toByteArray()
+
+    override fun primaryEmailChangeTokenSecretKey(): ByteArray = "primaryEmailChangeTokenSecretKey".toByteArray()
+
+    override fun primaryEmailConfirmationTokenSecretKey(): ByteArray = "primaryEmailConfirmationTokenSecretKey".toByteArray()
 
     override fun userMailSenderProvider(): MailSenderProvider = FileSystemMockedMailSender.fromTempDir("fpmtoolkit")
 

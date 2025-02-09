@@ -1,6 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.features.users.dto
 
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
+import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull

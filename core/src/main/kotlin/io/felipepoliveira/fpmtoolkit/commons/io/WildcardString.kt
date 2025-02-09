@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.commons.io
+package io.felipepoliveira.fpmtoolkit.commons.io
 
 import java.io.IOException
 import java.io.InputStream

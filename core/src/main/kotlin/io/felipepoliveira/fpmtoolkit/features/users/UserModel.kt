@@ -1,12 +1,14 @@
 package io.felipepoliveira.fpmtoolkit.features.users
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
+import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import jakarta.persistence.*
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.Type
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
@@ -21,7 +23,7 @@ class UserModel(
     @field:Column(name = "hashed_pwd", length = 64, nullable = false)
     @field:NotNull
     @field:JsonIgnore
-    val hashedPassword: String,
+    var hashedPassword: String,
 
     /**
      * The user ID used as primary key in the database
@@ -45,7 +47,13 @@ class UserModel(
     @field:Column(name = "primary_email", length = 120, nullable = false)
     @field:Email
     @field:NotNull
-    val primaryEmail: String,
+    var primaryEmail: String,
+
+    /**
+     * When the primary email was confirmed by the user
+     */
+    @field:Column(name = "primary_email_confirmed_at")
+    var primaryEmailConfirmedAt: LocalDateTime?,
 
     /**
      * The name used as presentation for the user
@@ -58,7 +66,7 @@ class UserModel(
     /**
      * The UUID of the user
      */
-    @field:Column(name = "uuid", length = 32, nullable = false)
+    @field:Column(name = "uuid", length = 40, nullable = false)
     @field:NotNull
-    val uuid: UUID,
+    val uuid: String,
 )

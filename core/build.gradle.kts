@@ -33,6 +33,9 @@ repositories {
 
 dependencies {
 
+    // https://mvnrepository.com/artifact/com.auth0/java-jwt
+    implementation("com.auth0:java-jwt:4.4.0")
+
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
 
@@ -54,6 +57,11 @@ dependencies {
     // Jakarta Validation API
     // https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api
     implementation("jakarta.validation:jakarta.validation-api:3.1.0")
+
+    // Jedis
+    // Jedis is a blazingly small and sane Redis java client.
+    // https://mvnrepository.com/artifact/redis.clients/jedis
+    implementation("redis.clients:jedis:5.2.0")
 
     // MySQL Connector Java
     // MySQL Connector/J is a JDBC Type 4 driver, which means that it is pure Java implementation of the MySQL protocol
