@@ -204,6 +204,14 @@ class UserService @Autowired constructor(
         // get the requester account
         val requester = assertFindByUuid(requesterUUID)
 
+        // check for timeout
+        if (userCache.onPrimaryMailChangeTimeout(requester)) {
+            throw BusinessRuleException(
+                BusinessRulesError.TOO_MANY_REQUESTS,
+                "Too many requests for this service"
+            )
+        }
+
         // if the user did not have confirmed its primary email the operation can not be completed
         if (requester.primaryEmailConfirmedAt == null ||
             Duration.between(requester.primaryEmailConfirmedAt, LocalDateTime.now()).toDays() > 7) {
@@ -229,11 +237,11 @@ class UserService @Autowired constructor(
             confirmationCode = confirmationCode
         )
 
-        // The mail is sent in a timeout context
-        userCache.executeOnPrimaryMailChangeTimeout(requester) {
-            // send the confirmation code to the new e-mail to confirm its ownership
-            userMail.sendPrimaryEmailChangeMail(requester, dto.newPrimaryEmail, confirmationCode)
-        }
+        // send the confirmation code to the new e-mail to confirm its ownership
+        userMail.sendPrimaryEmailChangeMail(requester, dto.newPrimaryEmail, confirmationCode)
+
+        // put the requester on timeout
+        userCache.putPrimaryMailChangeOnTimeout(requester)
 
         // return the token and payload
         return tokenAndPayload
@@ -299,6 +307,7 @@ class UserService @Autowired constructor(
      * In this service the user most provide the token that can be obtained from `sendPrimaryEmailChangeMail` and
      * the code that is sent to the target primary email.
      */
+    @Transactional
     fun updatePrimaryEmailWithPrimaryEmailChangeToken(
         requesterUUID: String,
         dto: UpdatePrimaryEmailWithPrimaryEmailChangeTokenDTO
@@ -328,7 +337,7 @@ class UserService @Autowired constructor(
             )
 
         // validate if the token provider is different from the requester
-        if (tokenPayload.userIdentifier != requester.uuid.toString()) {
+        if (tokenPayload.userIdentifier != requester.uuid) {
             throw BusinessRuleException(
                 BusinessRulesError.FORBIDDEN,
                 "The requester is different from the user that requested the operation"

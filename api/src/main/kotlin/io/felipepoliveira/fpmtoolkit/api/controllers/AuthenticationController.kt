@@ -6,10 +6,7 @@ import io.felipepoliveira.fpmtoolkit.api.security.auth.Roles
 import io.felipepoliveira.fpmtoolkit.api.security.tokens.ApiAuthenticationTokenProvider
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
-import io.felipepoliveira.fpmtoolkit.features.users.dto.ConfirmPrimaryEmailWithTokenDTO
-import io.felipepoliveira.fpmtoolkit.features.users.dto.FindByPrimaryEmailAndPasswordDTO
-import io.felipepoliveira.fpmtoolkit.features.users.dto.SendPrimaryEmailChangeMailDTO
-import io.felipepoliveira.fpmtoolkit.features.users.dto.UpdatePasswordWithRecoveryTokenDTO
+import io.felipepoliveira.fpmtoolkit.features.users.dto.*
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.annotation.Secured
@@ -91,10 +88,10 @@ class AuthenticationController @Autowired constructor(
     /**
      * Send the primary email confirmation mail
      */
-    @PostMapping("/send-primary-email-change-mail")
+    @PostMapping("/send-primary-email-confirmation-mail")
     fun sendPrimaryEmailChangeMail(
         @AuthenticationPrincipal requestClient: RequestClient,
-    ) = ok {
+    ) = noContent {
         userService.sendPrimaryEmailConfirmationMail(requestClient.userIdentifier)
     }
 
@@ -116,6 +113,17 @@ class AuthenticationController @Autowired constructor(
         @RequestBody dto: UpdatePasswordWithRecoveryTokenDTO
     ) = ok {
         userService.updatePasswordWithRecoveryToken(dto)
+    }
+
+    /**
+     * Update the primary email with token
+     */
+    @PutMapping("/update-primary-email-with-token")
+    fun updatePrimaryEmailWithPrimaryEmailChangeToken(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @RequestBody dto: UpdatePrimaryEmailWithPrimaryEmailChangeTokenDTO
+    ) = ok {
+        userService.updatePrimaryEmailWithPrimaryEmailChangeToken(requestClient.userIdentifier, dto)
     }
 
 }

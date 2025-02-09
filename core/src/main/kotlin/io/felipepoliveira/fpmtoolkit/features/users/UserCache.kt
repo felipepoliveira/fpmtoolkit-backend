@@ -28,7 +28,7 @@ class UserCache @Autowired constructor(
         callback()
 
         // include the key on the cache to set the timeout
-        cacheHandler.put(key, ttl.toMillis().toString(), ttl)
+        cacheHandler.put(key, ttl.toSeconds().toString(), ttl)
     }
 
     /**
@@ -38,12 +38,18 @@ class UserCache @Autowired constructor(
         executeOnTimeout("PWD_RCV_$primaryEmail", callback, Duration.ofMinutes(5))
     }
 
-    fun executeOnPrimaryMailChangeTimeout(requester: UserModel, callback: () -> Unit) {
-        executeOnTimeout("PRIMARY_EMAIL_CHANGE_${requester.uuid}", callback, Duration.ofMinutes(3))
-    }
-
     fun executeOnPrimaryMailConfirmationTimeout(requester: UserModel, callback: () -> Unit) {
         executeOnTimeout("PRIMARY_EMAIL_CONFIRMATION_${requester.uuid}", callback, Duration.ofMinutes(3))
+    }
+
+    fun onPrimaryMailChangeTimeout(requester: UserModel): Boolean {
+        return cacheHandler.keyExists("PRIMARY_EMAIL_CHANGE_${requester.uuid}")
+    }
+
+    fun putPrimaryMailChangeOnTimeout(requester: UserModel) {
+        val key = "PRIMARY_EMAIL_CHANGE_${requester.uuid}"
+        val timeout = Duration.ofMinutes(3)
+        cacheHandler.put(key, timeout.toSeconds().toString(), timeout)
     }
 
 }

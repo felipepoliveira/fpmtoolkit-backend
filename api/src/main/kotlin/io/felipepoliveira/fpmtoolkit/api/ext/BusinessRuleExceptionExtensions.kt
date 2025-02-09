@@ -13,6 +13,7 @@ private fun fromBusinessRuleTypeToHttpStatus(errorType: BusinessRulesError): Int
         BusinessRulesError.INVALID_PASSWORD -> 403
         BusinessRulesError.NOT_FOUND -> 404
         BusinessRulesError.VALIDATION -> 422
+        BusinessRulesError.TOO_MANY_REQUESTS -> 429
     }
 }
 

@@ -27,5 +27,6 @@ enum class BusinessRulesError {
     INVALID_EMAIL,
     INVALID_PASSWORD,
     NOT_FOUND,
+    TOO_MANY_REQUESTS,
     VALIDATION,
 }
