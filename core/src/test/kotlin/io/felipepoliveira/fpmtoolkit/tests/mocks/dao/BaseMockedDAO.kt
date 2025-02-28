@@ -1,6 +1,7 @@
 package io.felipepoliveira.fpmtoolkit.tests.mocks.dao
 
 import io.felipepoliveira.fpmtoolkit.dao.DAO
+import io.felipepoliveira.fpmtoolkit.dao.Pagination
 
 abstract class BaseMockedDAO<IDType, ModelType> : DAO<IDType, ModelType> {
 
@@ -13,6 +14,22 @@ abstract class BaseMockedDAO<IDType, ModelType> : DAO<IDType, ModelType> {
         return if (mockedObject == null) return null
         else mockedObject.mock()
     }
+
+    /**
+     * Return a mocked instance based on the given Mocked Object collection.
+     */
+    fun mock(mockedObjects: Collection<MockedObject<ModelType>>): Collection<ModelType> {
+        return mockedObjects.map { m -> m.mock() }
+    }
+
+    fun mockPagination(mockedObjects: Collection<MockedObject<ModelType>>, itemsPerPage: Int = 20, currentPage: Int = 1): Pagination {
+        return Pagination(
+            itemsPerPage,
+            totalRecords = mockedObjects.size.toLong(),
+            currentPage = currentPage
+        )
+    }
+
 
     override fun delete(m: ModelType) {}
 

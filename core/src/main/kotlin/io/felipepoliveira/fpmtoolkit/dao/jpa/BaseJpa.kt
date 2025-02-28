@@ -16,6 +16,12 @@ abstract class BaseJpa<IDType, ModelType> : DAO<IDType, ModelType>  {
      * Create a SmartQuery instance. A Smart Query is a class constructed to produce a better syntax way to write
      * HQLs
      */
+    fun paginatedQuery(typeAlias: String) = HqlSmartQuery(entityManager, getModelType(), typeAlias).asPagination()
+
+    /**
+     * Create a SmartQuery instance. A Smart Query is a class constructed to produce a better syntax way to write
+     * HQLs
+     */
     fun query(typeAlias: String) = HqlSmartQuery(entityManager, getModelType(), typeAlias)
 
     override fun delete(m: ModelType) {
@@ -37,13 +43,18 @@ abstract class BaseJpa<IDType, ModelType> : DAO<IDType, ModelType>  {
     }
 }
 
-class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelType: Class<ModelType>, typeAlias: String) {
+class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelType: Class<ModelType>, private val typeAlias: String) {
 
     private var hqlFromPart: String = "FROM ${modelType.simpleName} $typeAlias"
 
     private var hqlSelectPart = "SELECT $typeAlias"
 
     private var hqlWherePart: String = ""
+
+    fun asPagination(): HqlSmartQuery<ModelType> {
+        hqlFromPart = "SELECT COUNT($typeAlias)"
+        return this
+    }
 
     /**
      * Change the default `FROM $typeAlias` part of the HQL to `FROM $fromHql` given by this method

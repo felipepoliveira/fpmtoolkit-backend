@@ -19,6 +19,7 @@ class MockedUserDAO : BaseMockedDAO<Long, UserModel>(), UserDAO {
         mockedDatabase.add(MockedObject { user1() })
         mockedDatabase.add(MockedObject { user2() })
         mockedDatabase.add(MockedObject { userWithUnconfirmedPrimaryEmail() })
+        mockedDatabase.add(MockedObject { userWithALotOfOrganizations() })
     }
 
     /**
@@ -63,6 +64,16 @@ class MockedUserDAO : BaseMockedDAO<Long, UserModel>(), UserDAO {
         hashedPassword = hashPassword(defaultPassword()),
         presentationName = "User With Unconfirmed Primary Email",
         primaryEmailConfirmedAt = null
+    )
+
+    fun userWithALotOfOrganizations() = UserModel(
+        uuid = "550e8400-e29b-41d4-a716-446655440000",
+        preferredRegion = I18nRegion.PT_BR,
+        primaryEmail = "userwithalotoforgs@email.com",
+        id = 9000,
+        hashedPassword = hashPassword(defaultPassword()),
+        presentationName = "User with a lot of organizations",
+        primaryEmailConfirmedAt = primaryEmailConfirmedAt
     )
 
     override fun findByPrimaryEmail(primaryEmail: String): UserModel? {

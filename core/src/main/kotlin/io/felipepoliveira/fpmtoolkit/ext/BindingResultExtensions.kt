@@ -1,6 +1,11 @@
 package io.felipepoliveira.fpmtoolkit.ext
 
 import org.springframework.validation.BindingResult
+import org.springframework.validation.FieldError
+
+fun BindingResult.addError(fieldName: String, errorMessage: String, objectName: String = "object") {
+    addError(FieldError(objectName, fieldName, errorMessage))
+}
 
 /**
  * Parse a BindingResult into a map containing all the errors
