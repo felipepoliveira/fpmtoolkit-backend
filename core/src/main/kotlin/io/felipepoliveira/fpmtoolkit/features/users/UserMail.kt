@@ -6,7 +6,6 @@ import io.felipepoliveira.fpmtoolkit.commons.io.getLocalizedResourceAsInputStrea
 import io.felipepoliveira.fpmtoolkit.mail.MailContentType
 import io.felipepoliveira.fpmtoolkit.mail.MailRecipient
 import io.felipepoliveira.fpmtoolkit.mail.MailRecipientType
-import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 

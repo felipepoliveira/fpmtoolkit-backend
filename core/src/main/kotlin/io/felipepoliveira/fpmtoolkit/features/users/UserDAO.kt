@@ -1,7 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.features.users
 
 import io.felipepoliveira.fpmtoolkit.dao.DAO
-import java.util.UUID
 
 interface UserDAO : DAO<Long, UserModel> {
 

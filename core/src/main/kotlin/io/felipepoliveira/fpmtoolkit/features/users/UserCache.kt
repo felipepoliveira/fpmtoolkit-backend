@@ -1,7 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.features.users
 
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
-import io.felipepoliveira.fpmtoolkit.cache.CacheHandler
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.time.Duration

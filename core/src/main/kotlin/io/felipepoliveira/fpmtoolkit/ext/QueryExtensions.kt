@@ -28,7 +28,7 @@ fun <T> Query.fetchFirst(): T? {
 }
 
 fun Query.fetchPagination(itemsPerPage: Int): Pagination {
-    val countOfRecords = fetchFirst<Int>() ?: throw Exception("Expected an query that returned an Integer but returned null")
+    val countOfRecords = fetchFirst<Long>() ?: throw Exception("Expected an query that returned an Long but returned null")
     val countOfPages =  ceil((countOfRecords.toDouble() / itemsPerPage))
-    return Pagination(itemsPerPage, countOfRecords.toLong(), 1)
+    return Pagination(itemsPerPage, countOfRecords, 1)
 }

@@ -2,8 +2,8 @@ package io.felipepoliveira.fpmtoolkit.tests.unit.features
 
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
-import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
+import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import io.felipepoliveira.fpmtoolkit.features.users.dto.*
 import io.felipepoliveira.fpmtoolkit.security.comparePassword
 import io.felipepoliveira.fpmtoolkit.security.tokens.PasswordRecoveryTokenProvider

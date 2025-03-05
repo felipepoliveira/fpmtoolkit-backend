@@ -2,8 +2,6 @@ package io.felipepoliveira.fpmtoolkit.tests
 
 
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
-import io.felipepoliveira.fpmtoolkit.cache.CacheHandler
-import io.felipepoliveira.fpmtoolkit.features.users.UserMail
 import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
 import io.felipepoliveira.fpmtoolkit.tests.mocks.cache.MockedCacheHandler
 import io.felipepoliveira.fpmtoolkit.tests.mocks.mail.MockedMailSenderProvider

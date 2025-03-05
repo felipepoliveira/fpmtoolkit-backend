@@ -47,12 +47,14 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
 
     private var hqlFromPart: String = "FROM ${modelType.simpleName} $typeAlias"
 
+    private var hqlJoinPart: String = ""
+
     private var hqlSelectPart = "SELECT $typeAlias"
 
     private var hqlWherePart: String = ""
 
     fun asPagination(): HqlSmartQuery<ModelType> {
-        hqlFromPart = "SELECT COUNT($typeAlias)"
+        hqlSelectPart = "SELECT COUNT($typeAlias)"
         return this
     }
 
@@ -61,6 +63,11 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
      */
     fun from(fromHql: String): HqlSmartQuery<ModelType> {
         hqlFromPart = "FROM $fromHql"
+        return this
+    }
+
+    fun join(field: String, joinFieldAlias: String): HqlSmartQuery<ModelType> {
+        hqlJoinPart += " JOIN $field $joinFieldAlias"
         return this
     }
 
@@ -75,13 +82,45 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
     /**
      * Set the WHERE clause to `WHERE $whereHql` clause into the final HQL
      */
-    fun where(whereHql: String): HqlSmartQuery<ModelType> {
+    fun where(whereHql: String): HqlSmartQueryWhereClause<ModelType> {
         hqlWherePart = "WHERE $whereHql"
-        return this
+        return HqlSmartQueryWhereClause(this)
     }
 
     /**
      * Create
      */
-    fun prepare(): Query = entityManager.createQuery("$hqlSelectPart $hqlFromPart $hqlWherePart")
+    fun prepare(): Query {
+        val hql = "$hqlSelectPart $hqlFromPart $hqlJoinPart $hqlWherePart"
+        return entityManager.createQuery(hql)
+    }
+
+    /**
+     * Add Where Clause semantics to HqlSmartQuery
+     */
+    class HqlSmartQueryWhereClause<ModelType> internal constructor(
+        private val source: HqlSmartQuery<ModelType>
+    ) {
+
+        /**
+         * Add a AND clause to the existing WHERE HQL query string
+         */
+        fun and(whereHql: String): HqlSmartQueryWhereClause<ModelType> {
+            source.hqlWherePart += " AND $whereHql"
+            return this
+        }
+
+        /**
+         * Finish building the syntax for the Hql Smart Query and return the main reference
+         */
+        fun build(): HqlSmartQuery<ModelType> = source
+
+        fun or(whereHql: String): HqlSmartQueryWhereClause<ModelType> {
+            source.hqlWherePart += " OR $whereHql"
+            return this
+        }
+
+        fun prepare() = source.prepare()
+    }
+
 }

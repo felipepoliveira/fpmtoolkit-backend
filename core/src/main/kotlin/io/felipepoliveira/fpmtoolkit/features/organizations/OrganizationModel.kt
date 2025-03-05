@@ -1,7 +1,7 @@
 package io.felipepoliveira.fpmtoolkit.features.organizations
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.felipepoliveira.fpmtoolkit.features.users.UserModel
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberModel
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -32,12 +32,11 @@ class OrganizationModel(
     val id: Long?,
 
     /**
-     * The owner of the organization
+     * Bidirectional reference to the members that is originally mapped on OrganizationMemberModel.organization field
      */
     @field:JsonIgnore
-    @field:JoinColumn(name = "owner_id", nullable = false)
-    @field:ManyToOne(fetch = FetchType.LAZY, optional = false)
-    val owner: UserModel,
+    @field:OneToMany(mappedBy = "organization", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    val members: MutableList<OrganizationMemberModel>,
 
     /**
      * The presentation name of the organization

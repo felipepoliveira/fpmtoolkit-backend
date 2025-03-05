@@ -4,7 +4,6 @@ import io.felipepoliveira.fpmtoolkit.ext.fetchFirst
 import io.felipepoliveira.fpmtoolkit.features.users.UserDAO
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import org.springframework.stereotype.Repository
-import java.util.*
 
 @Repository
 class UserJpa : BaseJpa<Long, UserModel>(), UserDAO {

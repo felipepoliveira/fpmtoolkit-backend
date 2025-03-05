@@ -1,12 +1,11 @@
 package io.felipepoliveira.fpmtoolkit.tests.mocks.dao
 
+import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import io.felipepoliveira.fpmtoolkit.features.users.UserDAO
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
-import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import io.felipepoliveira.fpmtoolkit.security.hashPassword
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
-import java.util.*
 
 @Repository
 class MockedUserDAO : BaseMockedDAO<Long, UserModel>(), UserDAO {

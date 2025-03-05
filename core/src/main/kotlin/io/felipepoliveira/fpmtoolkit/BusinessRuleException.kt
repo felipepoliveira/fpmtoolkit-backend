@@ -2,7 +2,6 @@ package io.felipepoliveira.fpmtoolkit
 
 import io.felipepoliveira.fpmtoolkit.ext.toMap
 import org.springframework.validation.BindingResult
-import java.lang.Exception
 
 
 class BusinessRuleException(
@@ -25,8 +24,10 @@ enum class BusinessRulesError {
     FORBIDDEN,
     INVALID_CREDENTIALS,
     INVALID_EMAIL,
+    INVALID_PARAMETERS,
     INVALID_PASSWORD,
     NOT_FOUND,
+    PAYMENT_REQUIRED,
     TOO_MANY_REQUESTS,
     VALIDATION,
 }

@@ -4,12 +4,10 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.felipepoliveira.fpmtoolkit.cache.CacheHandler
 import io.felipepoliveira.fpmtoolkit.cache.RedisCacheHandler
-import io.felipepoliveira.fpmtoolkit.features.users.UserMail
 import io.felipepoliveira.fpmtoolkit.mail.FileSystemMockedMailSender
 import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
-import java.io.File
 import java.util.*
 import javax.sql.DataSource
 

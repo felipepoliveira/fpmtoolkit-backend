@@ -1,9 +1,8 @@
 package io.felipepoliveira.fpmtoolkit.beans.context
 
 import io.felipepoliveira.fpmtoolkit.cache.CacheHandler
-import io.felipepoliveira.fpmtoolkit.features.users.UserMail
 import io.felipepoliveira.fpmtoolkit.mail.MailSenderProvider
-import java.util.Properties
+import java.util.*
 import javax.sql.DataSource
 
 /**

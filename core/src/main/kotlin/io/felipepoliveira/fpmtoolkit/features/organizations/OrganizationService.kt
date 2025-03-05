@@ -4,7 +4,10 @@ import io.felipepoliveira.fpmtoolkit.BaseService
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.ext.addError
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberModel
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
 import io.felipepoliveira.fpmtoolkit.features.organizations.dto.CreateOrganizationDTO
+import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -16,12 +19,14 @@ import java.util.*
 @Service
 class OrganizationService @Autowired constructor(
     private val organizationDAO: OrganizationDAO,
+    private val organizationMemberService: OrganizationMemberService,
     private val userService: UserService,
     private val validator: SmartValidator
 ) : BaseService(validator) {
 
     companion object {
         const val MAXIMUM_AMOUNT_OF_ORGANIZATIONS_PER_FREE_ACCOUNT: Int = 5
+        const val PAGINATION_LIMIT = 20
     }
 
     /**
@@ -64,15 +69,50 @@ class OrganizationService @Autowired constructor(
             createdAt = LocalDateTime.now(),
             presentationName = dto.presentationName,
             id = null,
+            members = mutableListOf(),
+            profileName = dto.profileName,
             uuid = UUID.randomUUID().toString(),
-            owner = requester,
-            profileName = dto.profileName
         )
         organizationDAO.persist(organization)
+
+        // add the user as member and owner of the organization
+        val newOrgOwner = OrganizationMemberModel(
+            id = null,
+            user = requester,
+            roles = listOf(),
+            isOrganizationOwner = true,
+            organization = organization
+        )
+        organizationMemberService.addOrganizationMember(organization, newOrgOwner)
 
         return organization
     }
 
+    /**
+     * Return all organizations where the given user is a member
+     */
+    fun findOrganizationsByMember(requesterUuid: String, itemsPerPage: Int, page: Int): Collection<OrganizationModel> {
+        return findOrganizationsByMember(userService.assertFindByUuid(requesterUuid), itemsPerPage, page)
+    }
+
+    /**
+     * Return all organizations where the given user is a member
+     */
+    fun findOrganizationsByMember(user: UserModel, itemsPerPage: Int, page: Int): Collection<OrganizationModel> {
+        validatePagination(itemsPerPage, page, PAGINATION_LIMIT)
+        return organizationDAO.findByMember(user, itemsPerPage, page)
+    }
+
+    /**
+     * Return a flag indicating if the given profile name is available
+     */
+    fun isProfileNameAvailable(profileName: String): Boolean {
+        return organizationDAO.findByProfileName(profileName) != null
+    }
+
+    /**
+     * Return a flag indicating if the profile name of the organization is valid
+     */
     private fun isOrganizationProfileNameValid(orgProfileName: String): Boolean {
         // The Free Prefix regex assert that the orgProfileName always ends with *"-<9 random letters and digits>"
         // this will assert that cool profile name will be available only for premium users

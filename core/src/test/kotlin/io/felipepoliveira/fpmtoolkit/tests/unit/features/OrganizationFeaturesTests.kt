@@ -37,9 +37,12 @@ class OrganizationFeaturesTests @Autowired constructor(
         )
 
         // Assert
+        val createdOrganizationOwner = createdOrganization.members.first { o ->
+            o.isOrganizationOwner && o.user.id == requester.id
+        }
         createdOrganization.profileName shouldBe dto.profileName.lowercase()
         createdOrganization.presentationName shouldBe dto.presentationName
-        createdOrganization.owner.id shouldBe requester.id
+        createdOrganizationOwner.user.id shouldBe requester.id
     }
 
     test("Test if fails when profile name is not valid") {

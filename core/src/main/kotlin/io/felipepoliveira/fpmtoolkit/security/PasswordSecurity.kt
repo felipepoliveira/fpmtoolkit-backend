@@ -1,7 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.security
 
 import org.springframework.security.crypto.bcrypt.BCrypt
-import javax.xml.stream.events.Characters
 
 /**
  * Represent the safety rank of a password

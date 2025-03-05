@@ -13,6 +13,16 @@ interface OrganizationDAO : DAO<Long, OrganizationModel> {
     fun findByProfileName(profileName: String): OrganizationModel?
 
     /**
+     * Return all organizations where th given user is a member using pagination
+     */
+    fun findByMember(member: UserModel, itemsPerPage: Int, currentPage: Int): Collection<OrganizationModel>
+
+    /**
+     * Return pagination metadata of all organizations where the given user is a member
+     */
+    fun paginationByMember(member: UserModel, itemsPerPage: Int): Pagination
+
+    /**
      * Return all organizations owned by the given user using pagination
      */
     fun findByOwner(owner: UserModel, itemsPerPage: Int, currentPage: Int): Collection<OrganizationModel>
