@@ -21,6 +21,14 @@ class MockedOrganizationMemberDAO @Autowired constructor(
         })
     }
 
+    override fun findByOrganization(
+        organization: OrganizationModel,
+        itemsPerPage: Int,
+        page: Int
+    ): Collection<OrganizationMemberModel> {
+        return mock(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
+    }
+
     override fun findOwnerByOrganization(organization: OrganizationModel): OrganizationMemberModel? {
         return mock(mockedDatabase.find {
             m -> m.reference.organization.id == organization.id && m.reference.isOrganizationOwner
@@ -29,6 +37,10 @@ class MockedOrganizationMemberDAO @Autowired constructor(
 
     override fun paginationByOrganization(organization: OrganizationModel, itemsPerPage: Int): Pagination {
         return mockPagination(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
+    }
+
+    override fun findByUuid(uuid: String): OrganizationMemberModel? {
+        return mock(mockedDatabase.find { m -> m.reference.uuid == uuid })
     }
 
     override fun findById(id: Long): OrganizationMemberModel? {

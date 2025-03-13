@@ -37,6 +37,14 @@ class OrganizationJpa : OrganizationDAO, BaseJpa<Long, OrganizationModel>() {
         return queryByMember(query("o").asPagination(), member).fetchPagination(itemsPerPage)
     }
 
+    override fun findByUuid(uuid: String): OrganizationModel? {
+        return query("org")
+            .where("org.uuid = :uuid")
+            .prepare()
+            .setParameter("uuid", uuid)
+            .fetchFirst()
+    }
+
     private fun queryByOwner(owner: UserModel): HqlSmartQuery<OrganizationModel> {
         return query("org")
             .join("org.members", "m")

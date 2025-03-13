@@ -59,5 +59,13 @@ class OrganizationMemberJpa : OrganizationMemberDAO, BaseJpa<Long, OrganizationM
             .fetchPagination(itemsPerPage)
     }
 
+    override fun findByUuid(uuid: String): OrganizationMemberModel? {
+        return query("member")
+            .where("member.uuid = :uuid")
+            .prepare()
+            .setParameter("uuid", uuid)
+            .fetchFirst()
+    }
+
     override fun getModelType() = OrganizationMemberModel::class.java
 }

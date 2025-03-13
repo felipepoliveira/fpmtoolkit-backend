@@ -17,8 +17,11 @@ class MockedUserDAO : BaseMockedDAO<Long, UserModel>(), UserDAO {
     init {
         mockedDatabase.add(MockedObject { user1() })
         mockedDatabase.add(MockedObject { user2() })
+        mockedDatabase.add(MockedObject { user10OfOrg1WithAllRoles() })
+        mockedDatabase.add(MockedObject { user11OfOrg1WithNoRoles() })
         mockedDatabase.add(MockedObject { userWithUnconfirmedPrimaryEmail() })
         mockedDatabase.add(MockedObject { userWithALotOfOrganizations() })
+        mockedDatabase.add(MockedObject { userWithNoOrganization() })
     }
 
     /**
@@ -39,6 +42,26 @@ class MockedUserDAO : BaseMockedDAO<Long, UserModel>(), UserDAO {
         primaryEmailConfirmedAt = primaryEmailConfirmedAt
     )
 
+    fun user10OfOrg1WithAllRoles() = UserModel(
+        uuid = "4c89e3d7-1b72-4b25-b6a1-91be8d127a5c",
+        preferredRegion = I18nRegion.PT_BR,
+        primaryEmail = "user10@mock.com",
+        id = 10,
+        hashedPassword = hashPassword(defaultPassword()),
+        presentationName = "User 10",
+        primaryEmailConfirmedAt = primaryEmailConfirmedAt
+    )
+
+    fun user11OfOrg1WithNoRoles() = UserModel(
+        uuid = "4c89e3d7-1b72-4b25-b6a1-91be8d127a5d",
+        preferredRegion = I18nRegion.PT_BR,
+        primaryEmail = "user11@mock.com",
+        id = 11,
+        hashedPassword = hashPassword(defaultPassword()),
+        presentationName = "User 11",
+        primaryEmailConfirmedAt = primaryEmailConfirmedAt
+    )
+
     /**
      * Create a mocked instance of the user 2. This entity is included in the mocked database
      */
@@ -50,6 +73,16 @@ class MockedUserDAO : BaseMockedDAO<Long, UserModel>(), UserDAO {
         hashedPassword = hashPassword(defaultPassword()),
         presentationName = "User 2",
         primaryEmailConfirmedAt = primaryEmailConfirmedAt
+    )
+
+    fun userWithNoOrganization() = UserModel(
+        uuid = "user-with-no-org",
+        id = 9123,
+        presentationName = "User with no organization",
+        primaryEmailConfirmedAt = primaryEmailConfirmedAt,
+        hashedPassword = hashPassword(defaultPassword()),
+        preferredRegion = I18nRegion.PT_BR,
+        primaryEmail = "userwithnoorg@email.com"
     )
 
     /**

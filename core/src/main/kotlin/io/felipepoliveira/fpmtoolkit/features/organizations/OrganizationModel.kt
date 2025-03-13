@@ -44,7 +44,7 @@ class OrganizationModel(
     @field:Column(name = "presentation_name", length = 60, nullable = false)
     @field:NotBlank
     @field:Size(max = 80)
-    val presentationName: String,
+    var presentationName: String,
 
     /**
      * The profile name (set by the user). Used to publicly identify the organization

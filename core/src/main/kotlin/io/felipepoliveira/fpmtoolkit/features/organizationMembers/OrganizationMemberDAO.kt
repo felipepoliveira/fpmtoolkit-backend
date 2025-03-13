@@ -27,4 +27,11 @@ interface OrganizationMemberDAO : DAO<Long, OrganizationMemberModel> {
      * Return Pagination metadata of the members of the given organization
      */
     fun paginationByOrganization(organization: OrganizationModel, itemsPerPage: Int): Pagination
+
+    /**
+     * Find a OrganizationMemberModel identified by the given UUID. If the member is not found this method will
+     * return null
+     */
+    fun findByUuid(uuid: String): OrganizationMemberModel?
+
 }

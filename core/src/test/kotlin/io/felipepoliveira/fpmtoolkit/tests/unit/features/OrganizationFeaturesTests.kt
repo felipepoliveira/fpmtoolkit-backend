@@ -4,7 +4,9 @@ import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.organizations.dto.CreateOrganizationDTO
+import io.felipepoliveira.fpmtoolkit.features.organizations.dto.UpdateOrganizationDTO
 import io.felipepoliveira.fpmtoolkit.tests.UnitTestsConfiguration
+import io.felipepoliveira.fpmtoolkit.tests.mocks.dao.MockedOrganizationDAO
 import io.felipepoliveira.fpmtoolkit.tests.mocks.dao.MockedUserDAO
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -104,6 +106,81 @@ class OrganizationFeaturesTests @Autowired constructor(
                 requester.uuid,
                 dto
             )
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class UpdateOrganizationTests @Autowired constructor(
+    val mockedOrganizationDAO: MockedOrganizationDAO,
+    val mockedUserDAO: MockedUserDAO,
+    val organizationService: OrganizationService,
+) : FunSpec({
+
+    test("Test update organization success using the owner") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val dto = UpdateOrganizationDTO(
+            presentationName = "Updated Name"
+        )
+
+        // Act
+        val updatedOrg = organizationService.updateOrganization(requester.uuid, targetOrganization.uuid, dto)
+
+        // Assert
+        updatedOrg.presentationName shouldBe dto.presentationName
+    }
+
+    test("Test update organization success using the a member with all the required roles") {
+        // Arrange
+        val requester = mockedUserDAO.user10OfOrg1WithAllRoles()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val dto = UpdateOrganizationDTO(
+            presentationName = "Updated Name"
+        )
+
+        // Act
+        val updatedOrg = organizationService.updateOrganization(requester.uuid, targetOrganization.uuid, dto)
+
+        // Assert
+        updatedOrg.presentationName shouldBe dto.presentationName
+    }
+
+    test("Test if fails when request does not belong into the organization") {
+
+        // Arrange
+        val requester = mockedUserDAO.user1() // this user is not a member of the organization used below
+        val targetOrganization = mockedOrganizationDAO.organizationsOfUserWithALotOfOrganizations()[0]
+        val dto = UpdateOrganizationDTO(
+            presentationName = "Updated Name"
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationService.updateOrganization(requester.uuid, targetOrganization.uuid, dto)
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Test if fails when requested by a user with no required role") {
+        // Arrange
+        val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val dto = UpdateOrganizationDTO(
+            presentationName = "Updated Name"
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationService.updateOrganization(requester.uuid, targetOrganization.uuid, dto)
         }
 
         // Assert

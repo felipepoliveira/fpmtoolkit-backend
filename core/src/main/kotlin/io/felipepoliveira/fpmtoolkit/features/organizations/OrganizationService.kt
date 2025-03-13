@@ -5,8 +5,10 @@ import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.ext.addError
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberModel
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberRoles
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
 import io.felipepoliveira.fpmtoolkit.features.organizations.dto.CreateOrganizationDTO
+import io.felipepoliveira.fpmtoolkit.features.organizations.dto.UpdateOrganizationDTO
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,6 +29,33 @@ class OrganizationService @Autowired constructor(
     companion object {
         const val MAXIMUM_AMOUNT_OF_ORGANIZATIONS_PER_FREE_ACCOUNT: Int = 5
         const val PAGINATION_LIMIT = 20
+    }
+
+    /**
+     * Return an OrganizationModel  identified by the given UUID, if the organization does not exist it throws NOT_FOUND.
+     * Also, this method check if the given user is a member of the organization
+     */
+    internal fun findByUuid(uuid: String): OrganizationModel {
+        // assert that organization exists by its UUID
+        val organization = organizationDAO.findByUuid(uuid) ?:
+            throw BusinessRuleException(
+                BusinessRulesError.NOT_FOUND,
+                "Organization identified by UUID $uuid not found"
+            )
+
+        return organization
+    }
+
+    /**
+     * Return an organization identified by the given `organizationUuid` and check if the user identified by
+     * `userUuid` is a member of the organization
+     */
+    fun findByUuidAndCheckIfUserIsAMember(userUuid: String, organizationUuid: String): OrganizationModel {
+        val requester = userService.assertFindByUuid(userUuid)
+        val organization = findByUuid(organizationUuid)
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+
+        return organization
     }
 
     /**
@@ -81,7 +110,8 @@ class OrganizationService @Autowired constructor(
             user = requester,
             roles = listOf(),
             isOrganizationOwner = true,
-            organization = organization
+            organization = organization,
+            uuid = UUID.randomUUID().toString()
         )
         organizationMemberService.addOrganizationMember(organization, newOrgOwner)
 
@@ -119,6 +149,33 @@ class OrganizationService @Autowired constructor(
         val freePrefixRegex = Regex("(-[a-z0-9]{9})\$")
         val endsWithFreePrefix = freePrefixRegex.containsMatchIn(orgProfileName)
         return endsWithFreePrefix
+    }
+
+    /**
+     * Update the organization identified by `targetOrganizationUuid`
+     */
+    fun updateOrganization(requesterUuid: String, targetOrganizationUuid: String, dto: UpdateOrganizationDTO): OrganizationModel {
+        // check for validation result
+        val validationResult = validate(dto)
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        // fetch the user account
+        val requester = userService.assertFindByUuid(requesterUuid)
+
+        // fetch organization, check if requester is a member, and has the specific role
+        val targetOrganization = findByUuid(targetOrganizationUuid)
+        val requesterMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(
+            targetOrganization, requester
+        ).assertIsOwnerOr(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+
+        // update the organization
+        targetOrganization.presentationName = dto.presentationName
+
+        organizationDAO.update(targetOrganization)
+
+        return targetOrganization
     }
 
 }

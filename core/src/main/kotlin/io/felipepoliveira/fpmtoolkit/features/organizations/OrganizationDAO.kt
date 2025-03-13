@@ -7,6 +7,16 @@ import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 interface OrganizationDAO : DAO<Long, OrganizationModel> {
 
     /**
+     * Return all organizations owned by the given user using pagination
+     */
+    fun findByOwner(owner: UserModel, itemsPerPage: Int, currentPage: Int): Collection<OrganizationModel>
+
+    /**
+     * Return pagination metadata of all organizations owned by the given user
+     */
+    fun paginationByOwner(owner: UserModel, itemsPerPage: Int): Pagination
+
+    /**
      * Find an organization identified by the given profile name. If any organization is registered with the given
      * profile name it returns null
      */
@@ -23,13 +33,8 @@ interface OrganizationDAO : DAO<Long, OrganizationModel> {
     fun paginationByMember(member: UserModel, itemsPerPage: Int): Pagination
 
     /**
-     * Return all organizations owned by the given user using pagination
+     * Find a OrganizationModel identified by its UUID
      */
-    fun findByOwner(owner: UserModel, itemsPerPage: Int, currentPage: Int): Collection<OrganizationModel>
-
-    /**
-     * Return pagination metadata of all organizations owned by the given user
-     */
-    fun paginationByOwner(owner: UserModel, itemsPerPage: Int): Pagination
+    fun findByUuid(uuid: String): OrganizationModel?
 
 }

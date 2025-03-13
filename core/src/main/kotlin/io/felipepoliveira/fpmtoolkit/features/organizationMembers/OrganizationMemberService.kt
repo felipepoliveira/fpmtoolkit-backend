@@ -3,6 +3,8 @@ package io.felipepoliveira.fpmtoolkit.features.organizationMembers
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
+import io.felipepoliveira.fpmtoolkit.features.users.UserModel
+import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class OrganizationMemberService @Autowired constructor(
     private val organizationMemberDAO: OrganizationMemberDAO,
+    private val userService: UserService,
 ) {
 
     companion object {
@@ -42,7 +45,7 @@ class OrganizationMemberService @Autowired constructor(
             )
         }
 
-        // if the new member is marked to be the owner of the organization and organization already have a owner
+        // if the new member is marked to be the owner of the organization and organization already have an owner
         // throw an error
         val currentOrgOwner = organizationMemberDAO.findOwnerByOrganization(organization)
         if (newMember.isOrganizationOwner && currentOrgOwner != null) {
@@ -57,6 +60,59 @@ class OrganizationMemberService @Autowired constructor(
         organizationMemberDAO.persist(newMember)
 
         return newMember
+    }
+
+    /**
+     * Find an organization member identified by the given organization and the user account associated
+     * with the OrganizationMemberModel
+     */
+    fun findByOrganizationAndUserOrForbidden(organization: OrganizationModel, user: UserModel): OrganizationMemberModel {
+        return organizationMemberDAO.findByOrganizationAndUser(organization, user) ?: throw BusinessRuleException(
+            BusinessRulesError.FORBIDDEN,
+            "Could not found membership of user ${user.uuid} in organization ${organization.profileName}"
+        )
+    }
+
+    /**
+     * Remove a member from the organization. The applied rules are:
+     * - The user can only be deleted if the requester is the owner or administrator of the target member organization
+     * - The member can only be deleted if it is not the owner of the organization
+     */
+    fun removeOrganizationMember(requesterUuid: String, targetOrganizationUuid: String, targetMemberUuid: String): OrganizationMemberModel {
+        // fetch the requester account
+        val requester = userService.assertFindByUuid(requesterUuid)
+
+        // fetch the target member to remove
+        val targetMemberToRemove = organizationMemberDAO.findByUuid(targetMemberUuid) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            "Can not find a member identified by UUID: $targetMemberUuid"
+        )
+
+        // the requester can only delete the target member if it has the required role or is the owner
+        findByOrganizationAndUserOrForbidden(targetMemberToRemove.organization, requester)
+            .assertIsOwnerOr(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+
+        return removeOrganizationMember(targetMemberToRemove)
+
+    }
+
+    /**
+     * Remove a member from the organization. The applied rules are:
+     * - The member can only be deleted if it is not the owner of the organization
+     */
+    @Transactional
+    private fun removeOrganizationMember(targetMemberToRemove: OrganizationMemberModel): OrganizationMemberModel {
+
+        // the owner of the organization can not be removed
+        if (targetMemberToRemove.isOrganizationOwner) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "The owner of the organization can not be removed"
+            )
+        }
+
+        organizationMemberDAO.delete(targetMemberToRemove)
+        return targetMemberToRemove
     }
 
 }

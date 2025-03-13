@@ -1,13 +1,18 @@
 package io.felipepoliveira.fpmtoolkit.features.organizationMembers
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import io.felipepoliveira.fpmtoolkit.BusinessRuleException
+import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import jakarta.persistence.*
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
 @Entity
 @Table(name = "organization_member", indexes = [
-    Index(name = "UI_organization_id_AND_user_id_AT_organization_member", columnList = "organization_id, user_id", unique = true)
+    Index(name = "UI_organization_id_AND_user_id_AT_organization_member", columnList = "organization_id, user_id", unique = true),
+    Index(name = "UI_uuid_AT_organization_member", columnList = "uuid", unique = true),
 ])
 class OrganizationMemberModel(
     /**
@@ -15,7 +20,15 @@ class OrganizationMemberModel(
      */
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
+    @field:JsonIgnore
     val id: Long?,
+
+    /**
+     * The UUID used to identify the member
+     */
+    @field:Column(name = "uuid", nullable = false, length = 40)
+    @field:NotBlank
+    val uuid: String,
 
     /**
      * Flag that indicates if the member is the owner of the organization. Only one owner could exist in an organization
@@ -53,6 +66,29 @@ class OrganizationMemberModel(
     val user: UserModel,
 ) {
 
+    fun assertIsOwnerOr(vararg roles: OrganizationMemberRoles): OrganizationMemberModel {
+        if (!isOwnerOr(*roles)) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "User does not have the required role to the requested service"
+            )
+        }
+
+        return this
+    }
+
+    /**
+     * Return a flag if this member is the owner of the organization or contains any of the given roles
+     */
+    fun isOwnerOr(vararg roles: OrganizationMemberRoles): Boolean {
+        // return true if the user is the owner of the organization
+        if (this.isOrganizationOwner) {
+            return true
+        }
+
+        // return a flag if any of the given roles is contained in the organization member roles collection
+        return roles.any { r -> this.roles.contains(r) }
+    }
 
 }
 

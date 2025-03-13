@@ -20,17 +20,6 @@ class UserOrganizationsController @Autowired constructor(
 ) : BaseRestController() {
 
     /**
-     * Create a new organization into the platform
-     */
-    @PostMapping
-    fun createOrganization(
-        @AuthenticationPrincipal requestClient: RequestClient,
-        @RequestBody dto: CreateOrganizationDTO,
-    ) = ok {
-        organizationService.createOrganization(requestClient.userIdentifier, dto)
-    }
-
-    /**
      * Return all organizations where the user is a member
      */
     @GetMapping
