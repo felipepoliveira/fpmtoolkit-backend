@@ -64,6 +64,7 @@ class AuthenticationController @Autowired constructor(
      * Return the roles of the given user.
      */
     private fun getSessionRoles(user: UserModel): Array<String> = arrayOf() //TODO implement roles aggregation on token
+    
 
     /**
      * Return information about the authenticated user

@@ -23,7 +23,7 @@ class OrganizationMemberService @Autowired constructor(
      * Add a new organization member in the given organization
      */
     @Transactional
-    fun addOrganizationMember(
+    internal fun addOrganizationMember(
         organization: OrganizationModel,
         newMember: OrganizationMemberModel): OrganizationMemberModel {
 
