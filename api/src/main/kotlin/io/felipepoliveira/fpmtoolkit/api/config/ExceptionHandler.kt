@@ -5,10 +5,11 @@ import io.felipepoliveira.fpmtoolkit.api.ext.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.web.HttpRequestMethodNotSupportedException
+import org.springframework.web.bind.MissingRequestValueException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.servlet.resource.NoResourceFoundException
-import kotlin.Exception
 
 @ControllerAdvice
 class ExceptionHandler {
@@ -24,11 +25,14 @@ class ExceptionHandler {
     /**
      * Catch errors related to client data deserialization
      */
-    @ExceptionHandler(exception = [HttpMessageNotReadableException::class])
+    @ExceptionHandler(exception = [
+        HttpMessageNotReadableException::class,
+        MissingRequestValueException::class,
+    ])
     fun badRequest(exception: Exception): ResponseEntity<Any> {
         return ResponseEntity
             .badRequest()
-            .header("X-Reason", "You sent a request that could not be decoded by the server. Check the Content-Type of the endpoint to see the details of the request that should be sent")
+            .header("X-Reason", "You sent a request that could not be decoded by the server. Check the request parameters on the documentation")
             .build()
     }
 
@@ -46,6 +50,17 @@ class ExceptionHandler {
         exception.printStackTrace()
         return ResponseEntity
             .status(500)
+            .build()
+    }
+
+
+    /**
+     * Http status 405
+     */
+    @ExceptionHandler(exception = [HttpRequestMethodNotSupportedException::class])
+    fun methodNotAllowedException(exception: Exception): ResponseEntity<Any> {
+        return ResponseEntity
+            .status(405)
             .build()
     }
 

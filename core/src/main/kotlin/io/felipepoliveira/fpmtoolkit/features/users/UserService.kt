@@ -6,6 +6,7 @@ import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
 import io.felipepoliveira.fpmtoolkit.commons.io.RandomString
 import io.felipepoliveira.fpmtoolkit.features.users.dto.*
+import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.users.dto.IsEmailAvailableDTO
 import io.felipepoliveira.fpmtoolkit.security.PasswordRank
 import io.felipepoliveira.fpmtoolkit.security.calculatePasswordRank
 import io.felipepoliveira.fpmtoolkit.security.comparePassword
@@ -157,6 +158,15 @@ class UserService @Autowired constructor(
         return userDAO.findByUuid(uuid) ?: throw BusinessRuleException(
             BusinessRulesError.NOT_FOUND,
             "User identified by UUID $uuid not found"
+        )
+    }
+
+    /**
+     * Return an object data indicating if the given email is available to use in the platform
+     */
+    fun isEmailAvailableToUseAsAccessCredential(email: String): IsEmailAvailableDTO {
+        return IsEmailAvailableDTO(
+            isAvailable = userDAO.findByPrimaryEmail(email) == null
         )
     }
 
