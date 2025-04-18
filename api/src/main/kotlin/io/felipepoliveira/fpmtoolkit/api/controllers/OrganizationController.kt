@@ -50,6 +50,14 @@ class OrganizationController @Autowired constructor(
         organizationService.findByUuidAndCheckIfUserIsAMember(requestClient.userIdentifier, uuid)
     }
 
+    @GetMapping("/find-by-profile-name/{profileName}")
+    fun findByProfileName(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable profileName: String
+    ) = ok {
+        organizationService.findByProfileNameAndCheckIfUserIsAMember(requestClient.userIdentifier, profileName)
+    }
+
     /**
      * Check if the profile name is available
      */

@@ -2,6 +2,8 @@ package io.felipepoliveira.fpmtoolkit.features.organizationMembers
 
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.dao.Pagination
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationDAO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
@@ -17,6 +19,7 @@ class OrganizationMemberService @Autowired constructor(
 
     companion object {
         const val MAXIMUM_AMOUNT_OF_FREE_MEMBERS: Int = 20
+        const val PAGINATION_LIMIT: Int = 20
     }
 
     /**
@@ -60,6 +63,31 @@ class OrganizationMemberService @Autowired constructor(
         organizationMemberDAO.persist(newMember)
 
         return newMember
+    }
+
+    /**
+     * Return data about the organization members of the given organization. Also, this method
+     * will verify if the given requester is a member of the organization
+     */
+    fun findByOrganization(organization: OrganizationModel, requester: UserModel,
+                           itemsPerPage: Int, page: Int): Collection<OrganizationMemberModel> {
+        //TODO implement unit test
+        val requesterMembership = findByOrganizationAndUserOrForbidden(organization, requester)
+        return organizationMemberDAO.findByOrganization(
+            organization,
+            itemsPerPage.coerceIn(1..PAGINATION_LIMIT),
+            page.coerceAtLeast(1)
+        )
+    }
+
+    /**
+     * Return pagination metadata about the organization members of the given organization. Also, this method
+     * will verify if the given requester is a member of the organization
+     */
+    fun paginationByOrganization(organization: OrganizationModel, requester: UserModel, itemsPerPage: Int): Pagination {
+        //TODO implement unit test
+        val requesterMembership = findByOrganizationAndUserOrForbidden(organization, requester)
+        return organizationMemberDAO.paginationByOrganization(organization, itemsPerPage.coerceIn(1..PAGINATION_LIMIT))
     }
 
     /**

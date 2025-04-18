@@ -47,6 +47,23 @@ class OrganizationService @Autowired constructor(
     }
 
     /**
+     * Return an organization identified by the given 'profileName' and check if the user identified by
+     * 'userUuid' is a member of the organization
+     */
+    fun findByProfileNameAndCheckIfUserIsAMember(userUuid: String, profileName: String): OrganizationModel {
+        val requester = userService.assertFindByUuid(userUuid)
+        val organization = organizationDAO.findByProfileName(profileName) ?: throw BusinessRuleException(
+            error = BusinessRulesError.NOT_FOUND,
+            reason = "Could not find a organization with profileName '${profileName}'"
+        )
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+
+        //TODO implement unit tests for this method
+
+        return organization
+    }
+
+    /**
      * Return an organization identified by the given `organizationUuid` and check if the user identified by
      * `userUuid` is a member of the organization
      */

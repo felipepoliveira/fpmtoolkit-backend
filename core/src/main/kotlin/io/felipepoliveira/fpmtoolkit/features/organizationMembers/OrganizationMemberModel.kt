@@ -42,15 +42,16 @@ class OrganizationMemberModel(
     @field:ManyToOne
     @field:JoinColumn(name = "organization_id", nullable = false)
     @field:NotNull
+    @field:JsonIgnore
     val organization: OrganizationModel,
 
     /**
      * The roles applied into the member
      */
-    @field:ElementCollection(targetClass = OrganizationMemberRoles::class)
+    @field:ElementCollection(targetClass = OrganizationMemberRoles::class, fetch = FetchType.EAGER)
     @field:JoinTable(
         name = "organization_member_roles",
-        joinColumns = [JoinColumn(name = "organization_member_id")]
+        joinColumns = [JoinColumn(name = "organization_member_id")],
     ) @Column(
         name = "role",
         nullable = false

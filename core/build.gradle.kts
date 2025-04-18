@@ -61,6 +61,11 @@ dependencies {
     // https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api
     implementation("jakarta.validation:jakarta.validation-api:3.1.0")
 
+    // JBoss Logging 3
+    // The JBoss Logging Framework
+    // https://mvnrepository.com/artifact/org.jboss.logging/jboss-logging
+    implementation("org.jboss.logging:jboss-logging:3.6.1.Final")
+
     // Jedis
     // Jedis is a blazingly small and sane Redis java client.
     // https://mvnrepository.com/artifact/redis.clients/jedis
