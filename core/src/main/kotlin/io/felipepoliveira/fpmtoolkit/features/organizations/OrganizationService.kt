@@ -68,7 +68,14 @@ class OrganizationService @Autowired constructor(
      * `userUuid` is a member of the organization
      */
     fun findByUuidAndCheckIfUserIsAMember(userUuid: String, organizationUuid: String): OrganizationModel {
-        val requester = userService.assertFindByUuid(userUuid)
+        return findByUuidAndCheckIfUserIsAMember(userService.assertFindByUuid(userUuid), organizationUuid)
+    }
+
+    /**
+     * Return an organization identified by the given `organizationUuid` and check if the user identified by
+     * `userUuid` is a member of the organization
+     */
+    fun findByUuidAndCheckIfUserIsAMember(requester: UserModel, organizationUuid: String): OrganizationModel {
         val organization = findByUuid(organizationUuid)
         organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
 

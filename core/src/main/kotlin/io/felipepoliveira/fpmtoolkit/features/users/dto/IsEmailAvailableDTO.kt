@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.users.dto
+package io.felipepoliveira.fpmtoolkitio.felipepoliveira.fpmtoolkit.features.users.dto
 
 data class IsEmailAvailableDTO(
     /**

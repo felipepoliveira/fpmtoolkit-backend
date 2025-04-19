@@ -6,7 +6,7 @@ import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
 import io.felipepoliveira.fpmtoolkit.commons.io.RandomString
 import io.felipepoliveira.fpmtoolkit.features.users.dto.*
-import io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.users.dto.IsEmailAvailableDTO
+import io.felipepoliveira.fpmtoolkitio.felipepoliveira.fpmtoolkit.features.users.dto.IsEmailAvailableDTO
 import io.felipepoliveira.fpmtoolkit.security.PasswordRank
 import io.felipepoliveira.fpmtoolkit.security.calculatePasswordRank
 import io.felipepoliveira.fpmtoolkit.security.comparePassword

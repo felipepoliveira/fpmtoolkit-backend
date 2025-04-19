@@ -19,6 +19,11 @@ interface OrganizationMemberDAO : DAO<Long, OrganizationMemberModel> {
     fun findByOrganization(organization: OrganizationModel, itemsPerPage: Int, page: Int): Collection<OrganizationMemberModel>
 
     /**
+     * Find a member of the given organization identified by the given primary email
+     */
+    fun findByOrganizationAndUserPrimaryEmail(organization: OrganizationModel, userPrimaryEmail: String): OrganizationMemberModel?
+
+    /**
      * Return the OrganizationMemberModel marked as owner of the given organization
      */
     fun findOwnerByOrganization(organization: OrganizationModel): OrganizationMemberModel?

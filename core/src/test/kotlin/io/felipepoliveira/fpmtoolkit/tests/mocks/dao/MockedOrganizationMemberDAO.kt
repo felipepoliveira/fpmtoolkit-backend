@@ -29,6 +29,16 @@ class MockedOrganizationMemberDAO @Autowired constructor(
         return mock(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
     }
 
+    override fun findByOrganizationAndUserPrimaryEmail(
+        organization: OrganizationModel,
+        userPrimaryEmail: String
+    ): OrganizationMemberModel? {
+        return mock(mockedDatabase.find { m ->
+            m.reference.organization.id == organization.id &&
+            m.reference.user.primaryEmail == userPrimaryEmail
+        })
+    }
+
     override fun findOwnerByOrganization(organization: OrganizationModel): OrganizationMemberModel? {
         return mock(mockedDatabase.find {
             m -> m.reference.organization.id == organization.id && m.reference.isOrganizationOwner

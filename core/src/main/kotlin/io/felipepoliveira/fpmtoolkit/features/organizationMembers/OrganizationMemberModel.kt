@@ -78,6 +78,12 @@ class OrganizationMemberModel(
         return this
     }
 
+    fun assertIsOwnerOrOrganizationAdministratorOr(vararg roles: OrganizationMemberRoles): OrganizationMemberModel {
+        val extendedRoles = roles.toList() + OrganizationMemberRoles.ORG_ADMINISTRATOR
+        return assertIsOwnerOr(*extendedRoles.toTypedArray())
+
+    }
+
     /**
      * Return a flag if this member is the owner of the organization or contains any of the given roles
      */
@@ -98,7 +104,16 @@ class OrganizationMemberModel(
  */
 enum class OrganizationMemberRoles {
     /**
-     * Mark the member as the administrator
+     * Organization administrator que do everything to manage the organization. The only restrictions are:
+     * - They cannot delete the organization
+     * - They cannot change the owner of the organization (only the owner can do that)
      */
-    ORG_ADMINISTRATOR
+    ORG_ADMINISTRATOR,
+
+    /**
+     * They can manage all members of an organization. That includes:
+     * - Manage organization members and invites (Add, update roles and remove)
+     */
+    ORG_MEMBER_ADMINISTRATOR,
+
 }

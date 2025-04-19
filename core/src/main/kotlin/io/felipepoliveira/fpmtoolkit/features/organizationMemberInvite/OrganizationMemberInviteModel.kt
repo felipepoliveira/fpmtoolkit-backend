@@ -1,4 +1,4 @@
-package io.felipepoliveira.fpmtoolkit.io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite
+package io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel

@@ -54,6 +54,19 @@ class OrganizationMemberJpa : OrganizationMemberDAO, BaseJpa<Long, OrganizationM
             .fetchAllPaginated(itemsPerPage, page)
     }
 
+    override fun findByOrganizationAndUserPrimaryEmail(
+        organization: OrganizationModel,
+        userPrimaryEmail: String
+    ): OrganizationMemberModel? {
+        return query("member")
+            .where("member.organization.id = :organizationId")
+            .and("member.user.primaryEmail = :userPrimaryEmail")
+            .prepare()
+            .setParameter("organizationId", organization.id)
+            .setParameter("userPrimaryEmail", userPrimaryEmail)
+            .fetchFirst()
+    }
+
     override fun paginationByOrganization(organization: OrganizationModel, itemsPerPage: Int): Pagination {
         return queryByOrganization(query("om").asPagination(), organization)
             .fetchPagination(itemsPerPage)
