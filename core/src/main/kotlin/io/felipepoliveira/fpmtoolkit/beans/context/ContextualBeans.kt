@@ -22,6 +22,11 @@ interface ContextualBeans {
     fun cacheHandler(): CacheHandler
 
     /**
+     * Return the secret key used to sign te organization invite token secret
+     */
+    fun organizationInviteTokenSecretKey(): ByteArray
+
+    /**
      * Return the primary email change token private signature key
      */
     fun primaryEmailChangeTokenSecretKey(): ByteArray

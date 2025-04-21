@@ -2,6 +2,7 @@ package io.felipepoliveira.fpmtoolkit.tests.unit.features
 
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteService
 import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.dto.CreateOrganizationMemberInviteDTO
 import io.felipepoliveira.fpmtoolkit.tests.UnitTestsConfiguration
@@ -33,7 +34,8 @@ class CreateOrganizationMemberInviteTests @Autowired constructor(
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val requester = mockedUserDAO.user1()
         val dto = CreateOrganizationMemberInviteDTO(
-            memberEmail = "new_member@email.com"
+            memberEmail = "new_member@email.com",
+            inviteMailLanguage = I18nRegion.PT_BR
         )
 
         // act
@@ -54,7 +56,8 @@ class CreateOrganizationMemberInviteTests @Autowired constructor(
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val requester = mockedUserDAO.user10OfOrg1WithAllRoles()
         val dto = CreateOrganizationMemberInviteDTO(
-            memberEmail = "new_member@email.com"
+            memberEmail = "new_member@email.com",
+            inviteMailLanguage = I18nRegion.PT_BR
         )
 
         // act
@@ -75,7 +78,8 @@ class CreateOrganizationMemberInviteTests @Autowired constructor(
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val requester = mockedUserDAO.user1()
         val dto = CreateOrganizationMemberInviteDTO(
-            memberEmail = "invalid_email"
+            memberEmail = "invalid_email",
+            inviteMailLanguage = I18nRegion.PT_BR
         )
 
         // act
@@ -98,7 +102,8 @@ class CreateOrganizationMemberInviteTests @Autowired constructor(
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
         val dto = CreateOrganizationMemberInviteDTO(
-            memberEmail = "new_member@email.com"
+            memberEmail = "new_member@email.com",
+            inviteMailLanguage = I18nRegion.PT_BR
         )
 
         // act
@@ -119,7 +124,8 @@ class CreateOrganizationMemberInviteTests @Autowired constructor(
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val requester = mockedUserDAO.user1()
         val dto = CreateOrganizationMemberInviteDTO(
-            memberEmail = mockedUserDAO.user11OfOrg1WithNoRoles().primaryEmail // this user is already a member of the user 1 org
+            memberEmail = mockedUserDAO.user11OfOrg1WithNoRoles().primaryEmail, // this user is already a member of the user 1 org
+            inviteMailLanguage = I18nRegion.PT_BR
         )
 
         // act
@@ -140,7 +146,8 @@ class CreateOrganizationMemberInviteTests @Autowired constructor(
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val requester = mockedUserDAO.user1()
         val dto = CreateOrganizationMemberInviteDTO(
-            memberEmail = mockedOrganizationMemberInviteDAO.invite1OwnerByOrganization1().memberEmail
+            memberEmail = mockedOrganizationMemberInviteDAO.invite1OwnerByOrganization1().memberEmail,
+            inviteMailLanguage = I18nRegion.PT_BR
         )
 
         // act

@@ -29,6 +29,7 @@ class UnitTestsConfiguration : ContextualBeans {
     override fun authenticationTokenSecretKey(): ByteArray  = "authenticationTokenSecretKey".toByteArray()
 
     override fun cacheHandler() = MockedCacheHandler()
+    override fun organizationInviteTokenSecretKey(): ByteArray = "organizationInviteTokenSecretKey".toByteArray()
 
     override fun jpaDataSource(): DataSource = throw Exception("Bean not needed on unit test context")
     override fun jpaProperties(): Properties = throw Exception("Bean not needed on unit test context")

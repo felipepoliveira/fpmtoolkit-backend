@@ -27,6 +27,8 @@ class DevelopmentBeans : ContextualBeans {
         return RedisCacheHandler(JedisPool(poolConfig, "localhost", 6379))
     }
 
+    override fun organizationInviteTokenSecretKey(): ByteArray = "organizationInviteTokenSecretKey".toByteArray()
+
 
     override fun jpaDataSource(): DataSource {
         val config = HikariConfig()

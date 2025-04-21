@@ -3,6 +3,8 @@ package io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite
 import io.felipepoliveira.fpmtoolkit.BaseService
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
+import io.felipepoliveira.fpmtoolkit.commons.i18n.I18nRegion
 import io.felipepoliveira.fpmtoolkit.dao.Pagination
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberDAO
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberRoles
@@ -10,19 +12,28 @@ import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMe
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.dto.CreateOrganizationMemberInviteDTO
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationMail
+import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteMail
+import io.felipepoliveira.fpmtoolkit.security.tokens.OrganizationMemberInviteTokenProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.SmartValidator
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
 class OrganizationMemberInviteService @Autowired constructor(
-    private val organizationMemberInviteDAO: OrganizationMemberInviteDAO,
-    private val organizationService: OrganizationService,
+    private val contextualBeans: ContextualBeans,
+    private val organizationMemberInviteCache: OrganizationMemberInviteCache,
+    private val organizationMemberInviteMail: OrganizationMemberInviteMail,
+    private val organizationInviteTokenProvider: OrganizationMemberInviteTokenProvider,
     private val organizationMemberDAO: OrganizationMemberDAO,
+    private val organizationMemberInviteDAO: OrganizationMemberInviteDAO,
     private val organizationMemberService: OrganizationMemberService,
+    private val organizationService: OrganizationService,
     private val userService: UserService,
     private val validator: SmartValidator,
 ) : BaseService(validator) {
@@ -69,8 +80,6 @@ class OrganizationMemberInviteService @Autowired constructor(
             )
         }
 
-        //TODO send the invite email
-
         // create a new invite and persist it on the database
         val invite = OrganizationMemberInviteModel(
             id = null,
@@ -80,6 +89,8 @@ class OrganizationMemberInviteService @Autowired constructor(
             memberEmail = dto.memberEmail
         )
         organizationMemberInviteDAO.persist(invite)
+
+        sendInviteMail(invite, dto.inviteMailLanguage)
 
         return invite
     }
@@ -123,7 +134,27 @@ class OrganizationMemberInviteService @Autowired constructor(
         organizationMemberInviteDAO.delete(invite)
 
         return invite
+    }
 
+    fun sendInviteMail(invite: OrganizationMemberInviteModel, language: I18nRegion) {
+        // Using cache timeout, issue the invite token and sent it via email
+        organizationMemberInviteCache.executeOnOrganizationMemberInviteMailTimeout(invite.organization, invite.memberEmail) {
+            // issuing the token
+            val inviteTokenAndPayload = organizationInviteTokenProvider.issue(
+                organization = invite.organization,
+                recipientEmail = invite.memberEmail,
+                expiresAt = Instant.now().plus(7, ChronoUnit.DAYS)
+            )
+            // building the invite URL
+            val inviteUrl = "${contextualBeans.webappUrl()}/join-organization?token=${inviteTokenAndPayload.token}"
+            // send the mail
+            organizationMemberInviteMail.sendInviteMail(
+                language,
+                invite.organization,
+                invite.memberEmail,
+                inviteUrl
+            )
+        }
     }
 
 }
