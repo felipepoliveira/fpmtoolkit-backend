@@ -9,6 +9,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MissingRequestValueException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @ControllerAdvice
@@ -27,6 +28,7 @@ class ExceptionHandler {
      */
     @ExceptionHandler(exception = [
         HttpMessageNotReadableException::class,
+        MethodArgumentTypeMismatchException::class,
         MissingRequestValueException::class,
     ])
     fun badRequest(exception: Exception): ResponseEntity<Any> {

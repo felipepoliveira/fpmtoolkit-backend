@@ -136,6 +136,18 @@ class OrganizationMemberInviteService @Autowired constructor(
         return invite
     }
 
+    fun sendInviteMail(requesterUuid: String, inviteUuid: String, language: I18nRegion) {
+        // assert that the user is
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val invite = findByUuid(inviteUuid)
+        organizationMemberService
+            .findByOrganizationAndUserOrForbidden(invite.organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_MEMBER_ADMINISTRATOR)
+
+        sendInviteMail(invite, language)
+
+    }
+
     fun sendInviteMail(invite: OrganizationMemberInviteModel, language: I18nRegion) {
         // Using cache timeout, issue the invite token and sent it via email
         organizationMemberInviteCache.executeOnOrganizationMemberInviteMailTimeout(invite.organization, invite.memberEmail) {

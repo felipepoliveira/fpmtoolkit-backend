@@ -1,5 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.api.controllers
 
+import io.felipepoliveira.fpmtoolkit.api.controllers.dto.SendOrganizationMemberInviteMailDTO
 import io.felipepoliveira.fpmtoolkit.api.security.auth.RequestClient
 import io.felipepoliveira.fpmtoolkit.api.security.auth.Roles
 import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteService
@@ -22,6 +23,7 @@ import java.util.UUID
 class OrganizationMemberInviteController @Autowired constructor(
     private val organizationMemberInviteService: OrganizationMemberInviteService
 ) : BaseRestController() {
+
 
     @PostMapping
     fun createInvite(
@@ -62,4 +64,12 @@ class OrganizationMemberInviteController @Autowired constructor(
         organizationMemberInviteService.remove(requestClient.userIdentifier, inviteUUID)
     }
 
+    @PostMapping("/{inviteUuid}/resend-mail")
+    fun sendInviteMail(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @RequestBody dto: SendOrganizationMemberInviteMailDTO,
+        @PathVariable inviteUuid: String
+    ) = noContent {
+        organizationMemberInviteService.sendInviteMail(requestClient.userIdentifier, inviteUuid, dto.mailLanguage)
+    }
 }
