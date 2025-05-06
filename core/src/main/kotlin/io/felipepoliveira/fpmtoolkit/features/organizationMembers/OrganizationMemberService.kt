@@ -3,17 +3,26 @@ package io.felipepoliveira.fpmtoolkit.features.organizationMembers
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.dao.Pagination
+import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteDAO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationDAO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
+import io.felipepoliveira.fpmtoolkit.features.users.UserDAO
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
+import io.felipepoliveira.fpmtoolkit.security.tokens.OrganizationMemberInviteTokenProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.*
 
 @Service
 class OrganizationMemberService @Autowired constructor(
     private val organizationMemberDAO: OrganizationMemberDAO,
+    private val organizationMemberInviteTokenProvider: OrganizationMemberInviteTokenProvider,
+    private val organizationMemberInviteDAO: OrganizationMemberInviteDAO,
+    private val organizationDAO: OrganizationDAO,
+    private val userDAO: UserDAO,
     private val userService: UserService,
 ) {
 
@@ -122,6 +131,46 @@ class OrganizationMemberService @Autowired constructor(
 
         return removeOrganizationMember(targetMemberToRemove)
 
+    }
+
+    /**
+     * Add a new organization member using invite
+     */
+    fun ingressByInvite(token: String): OrganizationMemberModel {
+
+        // Decode the given token
+        val decodedToken = organizationMemberInviteTokenProvider.validateAndDecode(token)
+            ?: throw BusinessRuleException(
+                error = BusinessRulesError.INVALID_CREDENTIALS,
+                reason = "Invalid token"
+            )
+
+        // try to find the invite from the database
+        val invite = organizationMemberInviteDAO.findByUuid(decodedToken.inviteId) ?: throw BusinessRuleException(
+            error = BusinessRulesError.FORBIDDEN,
+            reason = "Could not find the invite identified by '${decodedToken.inviteId}'"
+        )
+
+        // assert that the user has an account in the platform
+        val recipientUserAccount = userDAO.findByPrimaryEmail(invite.memberEmail) ?: throw BusinessRuleException(
+            error = BusinessRulesError.FORBIDDEN,
+            reason = "The user identified by the email '${invite.memberEmail}' should have an account before joining the organization"
+        )
+
+        // add the new member into organization
+        val organizationMember = OrganizationMemberModel(
+            id = null,
+            organization = invite.organization,
+            isOrganizationOwner = false,
+            uuid = UUID.randomUUID().toString(),
+            user = recipientUserAccount,
+            roles = emptyList()
+        )
+
+        // add the organization member in the database
+        organizationMemberDAO.persist(organizationMember)
+
+        return organizationMember
     }
 
     /**

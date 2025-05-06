@@ -153,7 +153,7 @@ class OrganizationMemberInviteService @Autowired constructor(
         organizationMemberInviteCache.executeOnOrganizationMemberInviteMailTimeout(invite.organization, invite.memberEmail) {
             // issuing the token
             val inviteTokenAndPayload = organizationInviteTokenProvider.issue(
-                organization = invite.organization,
+                invite = invite,
                 recipientEmail = invite.memberEmail,
                 expiresAt = Instant.now().plus(7, ChronoUnit.DAYS)
             )

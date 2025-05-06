@@ -12,12 +12,14 @@ import java.time.LocalDateTime
 @Repository
 class MockedOrganizationMemberInviteDAO @Autowired constructor(
     private val mockedOrganizationDAO: MockedOrganizationDAO,
+    private val mockedUserDAO: MockedUserDAO,
 ) : OrganizationMemberInviteDAO, BaseMockedDAO<Long, OrganizationMemberInviteModel>() {
 
     private val mockedDatabase = mutableListOf<MockedObject<OrganizationMemberInviteModel>>()
 
     init {
         mockedDatabase.add(MockedObject { invite1OwnerByOrganization1() })
+        mockedDatabase.add(MockedObject { inviteForUserWithNoOrganizationButHasAnAccount() })
     }
 
     fun invite1OwnerByOrganization1() = OrganizationMemberInviteModel(
@@ -26,6 +28,14 @@ class MockedOrganizationMemberInviteDAO @Autowired constructor(
         id = 1,
         uuid = "1",
         createdAt = LocalDateTime.now()
+    )
+
+    fun inviteForUserWithNoOrganizationButHasAnAccount() = OrganizationMemberInviteModel(
+        organization = mockedOrganizationDAO.organization1OwnedByUser1(),
+        memberEmail = mockedUserDAO.userWithNoOrganization().primaryEmail,
+        id =  1000,
+        uuid = "1000",
+        createdAt = LocalDateTime.now(),
     )
 
     override fun findByOrganizationAndMemberEmail(
