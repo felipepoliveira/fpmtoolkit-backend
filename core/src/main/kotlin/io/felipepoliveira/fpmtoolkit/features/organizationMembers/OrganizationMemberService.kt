@@ -136,6 +136,7 @@ class OrganizationMemberService @Autowired constructor(
     /**
      * Add a new organization member using invite
      */
+    @Transactional
     fun ingressByInvite(token: String): OrganizationMemberModel {
 
         // Decode the given token

@@ -2,6 +2,7 @@ package io.felipepoliveira.fpmtoolkit.tests.unit.features
 
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteModel
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberModel
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
 import io.felipepoliveira.fpmtoolkit.security.tokens.OrganizationMemberInviteTokenProvider
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ContextConfiguration
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 @SpringBootTest
@@ -89,5 +91,26 @@ class IngressByInviteTests @Autowired constructor(
         exception.error shouldBe BusinessRulesError.INVALID_CREDENTIALS
     }
 
-    test("")
+    test("Test if fails when token has a invite with invalid ID") {
+        // arrange
+        val token = organizationMemberInviteTokenProvider.issue(
+            expiresAt = Instant.now().plus(1, ChronoUnit.DAYS),
+            recipientEmail = mockedUserDAO.userWithNoOrganization().primaryEmail,
+            invite = OrganizationMemberInviteModel(
+                organization = mockedOrganizationMemberInviteDAO.invite1OwnerByOrganization1().organization,
+                memberEmail = "new_member@email.com",
+                id = null,
+                uuid = "invalid_invite",
+                createdAt = LocalDateTime.now()
+            )
+        )
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.ingressByInvite(token.token)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
 })

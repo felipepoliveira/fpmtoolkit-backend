@@ -47,6 +47,11 @@ dependencies {
     // https://mvnrepository.com/artifact/org.hibernate/hibernate-core
     implementation("org.hibernate:hibernate-core:6.6.5.Final")
 
+    // Hibernate Commons Annotations
+    // Common reflection code used in support of annotation processing
+    // https://mvnrepository.com/artifact/org.hibernate.common/hibernate-commons-annotations
+    implementation("org.hibernate.common:hibernate-commons-annotations:6.0.6.Final")
+
     // HikariCP
     // HikariCP is a "zero-overhead" production ready JDBC connection pool.
     // https://mvnrepository.com/artifact/com.zaxxer/HikariCP
