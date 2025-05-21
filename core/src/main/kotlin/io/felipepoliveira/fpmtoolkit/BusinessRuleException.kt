@@ -20,6 +20,7 @@ class BusinessRuleException(
 
 enum class BusinessRulesError {
 
+    DUPLICATED,
     EMAIL_NOT_CONFIRMED,
     FORBIDDEN,
     INVALID_CREDENTIALS,

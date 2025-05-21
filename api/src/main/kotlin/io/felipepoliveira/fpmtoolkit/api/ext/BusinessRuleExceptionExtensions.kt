@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity
 
 private fun fromBusinessRuleTypeToHttpStatus(errorType: BusinessRulesError): Int {
     return when(errorType) {
+        BusinessRulesError.DUPLICATED -> 403
         BusinessRulesError.EMAIL_NOT_CONFIRMED -> 403
         BusinessRulesError.FORBIDDEN -> 403
         BusinessRulesError.INVALID_CREDENTIALS -> 403

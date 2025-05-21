@@ -16,6 +16,22 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@RequestMapping("/api/organization-members/public")
+class OrganizationMemberPublicEndpointsController @Autowired constructor(
+    private val organizationMemberService: OrganizationMemberService,
+) : BaseRestController() {
+    /**
+     * Add a new organization member into an organization using a invite as a ingress
+     */
+    @PostMapping("/ingress-by-invite")
+    fun ingressByInvite(
+        @RequestBody dto: IngressByInviteDTO
+    ) = ok {
+        organizationMemberService.ingressByInvite(dto.token)
+    }
+}
+
+@RestController
 @RequestMapping("/api/organizations/{organizationUuid}/members")
 class OrganizationMemberController @Autowired constructor(
     private val organizationService: OrganizationService,
@@ -49,16 +65,6 @@ class OrganizationMemberController @Autowired constructor(
                 page ?: 1
             )
         }
-    }
-
-    /**
-     * Add a new organization member into an organization using a invite as a ingress
-     */
-    @PostMapping("/public/ingress-by-invite")
-    fun ingressByInvite(
-        @RequestBody dto: IngressByInviteDTO
-    ) = ok {
-        organizationMemberService.ingressByInvite(dto.token)
     }
 }
 

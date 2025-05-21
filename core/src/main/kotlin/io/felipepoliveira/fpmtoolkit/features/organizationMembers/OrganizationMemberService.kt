@@ -158,6 +158,14 @@ class OrganizationMemberService @Autowired constructor(
             reason = "The user identified by the email '${invite.memberEmail}' should have an account before joining the organization"
         )
 
+        // assert that the user is not a member yet
+        if (organizationMemberDAO.findByOrganizationAndUser(invite.organization, recipientUserAccount) != null) {
+            throw BusinessRuleException(
+                error = BusinessRulesError.DUPLICATED,
+                reason = "The user is already a member of the organization"
+            )
+        }
+
         // add the new member into organization
         val organizationMember = OrganizationMemberModel(
             id = null,
@@ -168,8 +176,9 @@ class OrganizationMemberService @Autowired constructor(
             roles = emptyList()
         )
 
-        // add the organization member in the database
+        // add the organization member in the database and delete the invite
         organizationMemberDAO.persist(organizationMember)
+        organizationMemberInviteDAO.delete(invite)
 
         return organizationMember
     }

@@ -95,6 +95,18 @@ class OrganizationMemberInviteService @Autowired constructor(
         return invite
     }
 
+    fun findByInviteToken(inviteToken: String): OrganizationMemberInviteModel {
+        // decode the invite token
+        val decodedInviteToken = organizationInviteTokenProvider.validateAndDecode(inviteToken) ?: throw
+                BusinessRuleException(
+                    error = BusinessRulesError.INVALID_CREDENTIALS,
+                    reason = "Invalid token provided"
+                )
+
+        // fetch the token using its ID
+        return findByUuid(decodedInviteToken.inviteId)
+    }
+
     fun findByOrganization(organizationUuid: String, limit: Int, page: Int): Collection<OrganizationMemberInviteModel> {
         return organizationMemberInviteDAO.findByOrganization(
             organizationService.findByUuid(organizationUuid),

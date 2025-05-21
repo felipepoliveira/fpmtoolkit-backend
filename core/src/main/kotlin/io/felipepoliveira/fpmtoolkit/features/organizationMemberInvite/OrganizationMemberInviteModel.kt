@@ -45,7 +45,6 @@ class OrganizationMemberInviteModel(
     @field:ManyToOne
     @field:JoinColumn(name = "organization_id", nullable = false)
     @field:NotNull
-    @field:JsonIgnore
     val organization: OrganizationModel,
 
     /**

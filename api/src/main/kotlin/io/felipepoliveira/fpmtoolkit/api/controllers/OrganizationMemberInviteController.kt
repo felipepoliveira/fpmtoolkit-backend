@@ -19,6 +19,20 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
+@RequestMapping("/api/organization-member-invites/public")
+class OrganizationMemberInvitePublicEndpointsController  @Autowired constructor(
+    val organizationMemberInviteService: OrganizationMemberInviteService,
+): BaseRestController(){
+
+    @GetMapping("/by-token/{token}")
+    fun fetchInviteOrganizationUsingToken(
+        @PathVariable token: String
+    ) = ok {
+        organizationMemberInviteService.findByInviteToken(token)
+    }
+}
+
+@RestController
 @RequestMapping("/api/organizations/{organizationUuid}/invites")
 class OrganizationMemberInviteController @Autowired constructor(
     private val organizationMemberInviteService: OrganizationMemberInviteService
