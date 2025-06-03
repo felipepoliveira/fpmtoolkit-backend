@@ -35,7 +35,7 @@ class OrganizationService @Autowired constructor(
      * Return an OrganizationModel  identified by the given UUID, if the organization does not exist it throws NOT_FOUND.
      * Also, this method check if the given user is a member of the organization
      */
-    internal fun findByUuid(uuid: String): OrganizationModel {
+    fun findByUuid(uuid: String): OrganizationModel {
         // assert that organization exists by its UUID
         val organization = organizationDAO.findByUuid(uuid) ?:
             throw BusinessRuleException(

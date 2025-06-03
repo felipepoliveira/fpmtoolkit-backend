@@ -12,6 +12,7 @@ import java.util.UUID
 
 private const val SUBJECT: String = "UserAuthenticationToken/1.0"
 private const val CLAIM_CLIENT_IDENTIFIER: String = "clientIdentifier"
+private const val CLAIM_ORGANIZATION_IDENTIFIER: String = "organizationIdentifier"
 private const val CLAIM_USER_IDENTIFIER: String = "userIdentifier"
 private const val CLAIM_ROLES: String = "roles"
 
@@ -28,6 +29,10 @@ class ApiAuthenticationTokenPayload(
      * When the token was issued
      */
     val issuedAt: Instant,
+    /**
+     * The organization ID
+     */
+    val organizationId: String?,
 
     /**
      * The roles associated with the token
@@ -54,7 +59,9 @@ class ApiAuthenticationTokenAndPayload(
 class ApiAuthenticationTokenProvider(
     private val contextualBeans: ContextualBeans
 ) {
-    fun issue(user: UserModel, clientIdentifier: String, expiresAt: Instant, roles: Array<String>): ApiAuthenticationTokenAndPayload {
+    fun issue(
+        user: UserModel, clientIdentifier: String, expiresAt: Instant, roles: Array<String>, organizationId: String?
+    ): ApiAuthenticationTokenAndPayload {
 
         val issuedAt = Instant.now()
 
@@ -67,6 +74,7 @@ class ApiAuthenticationTokenProvider(
             issuedAt = issuedAt,
             expiresAt = expiresAt,
             clientIdentifier = clientIdentifier,
+            organizationId = organizationId,
             userIdentifier = UUID.fromString(user.uuid),
             roles = roles,
         )
@@ -78,6 +86,7 @@ class ApiAuthenticationTokenProvider(
             .withIssuedAt(issuedAt)
             .withExpiresAt(expiresAt)
             .withClaim(CLAIM_CLIENT_IDENTIFIER, payload.clientIdentifier)
+            .withClaim(CLAIM_ORGANIZATION_IDENTIFIER, if (payload.organizationId != null) payload.organizationId.toString() else null)
             .withClaim(CLAIM_USER_IDENTIFIER, payload.userIdentifier.toString())
             .withClaim(CLAIM_ROLES, payload.roles.asList())
             .sign(Algorithm.HMAC512(contextualBeans.authenticationTokenSecretKey()))
@@ -106,6 +115,7 @@ class ApiAuthenticationTokenProvider(
                 expiresAt = decodedJwt.expiresAtAsInstant,
                 issuedAt = decodedJwt.issuedAtAsInstant,
                 clientIdentifier = decodedJwt.getClaim(CLAIM_CLIENT_IDENTIFIER).asString(),
+                organizationId = decodedJwt.getClaim(CLAIM_ORGANIZATION_IDENTIFIER)?.asString(),
             )
 
             return payload

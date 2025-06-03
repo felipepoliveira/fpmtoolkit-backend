@@ -1,9 +1,13 @@
 package io.felipepoliveira.fpmtoolkit.api.controllers
 
+import io.felipepoliveira.fpmtoolkit.api.controllers.dto.RefreshTokenDTO
 import io.felipepoliveira.fpmtoolkit.api.controllers.dto.SendPasswordRecoveryMailDTO
 import io.felipepoliveira.fpmtoolkit.api.security.auth.RequestClient
 import io.felipepoliveira.fpmtoolkit.api.security.auth.Roles
 import io.felipepoliveira.fpmtoolkit.api.security.tokens.ApiAuthenticationTokenProvider
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberRoles
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import io.felipepoliveira.fpmtoolkit.features.users.dto.*
@@ -19,13 +23,17 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 @RestController
 @RequestMapping("/api/auth")
 class AuthenticationController @Autowired constructor(
     private val apiAuthenticationTokenProvider: ApiAuthenticationTokenProvider,
+    private val organizationService: OrganizationService,
+    private val organizationMemberService: OrganizationMemberService,
     private val userService: UserService,
 ) : BaseRestController() {
 
@@ -51,7 +59,8 @@ class AuthenticationController @Autowired constructor(
             user = user,
             clientIdentifier = request.remoteAddr,
             expiresAt = LocalDateTime.now().plusDays(30).toInstant(ZoneOffset.UTC),
-            roles = getSessionRoles(user)
+            roles = getSessionRoles(user),
+            null
         )
         tokenAndPayload
     }
@@ -83,6 +92,38 @@ class AuthenticationController @Autowired constructor(
     fun me(
         @AuthenticationPrincipal requestClient: RequestClient,
     ) = ok { userService.assertFindByUuid(requestClient.userIdentifier) }
+
+    fun refreshToken(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @RequestBody dto: RefreshTokenDTO,
+        request: HttpServletRequest
+    ) = ok {
+        var roles = arrayOf<String>()
+
+        // if the user passed the organization id, check if the user is a member
+        // and add its roles into the token based on its membership privileges
+        val requesterUser = userService.findByUuid(requestClient.userIdentifier)
+        if (dto.organizationId != null) {
+            val organization = organizationService.findByUuid(dto.organizationId)
+
+            val organizationMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requesterUser)
+
+            roles = if (organizationMembership.isOrganizationOwner) {
+                OrganizationMemberRoles.entries.map { e -> e.toString() }.toTypedArray()
+            } else {
+                organizationMembership.roles.map { r -> r.toString() }.toTypedArray()
+            }
+        }
+
+        // issue the token
+        apiAuthenticationTokenProvider.issue(
+            requesterUser,
+            request.remoteAddr,
+            Instant.now().plus(7, ChronoUnit.DAYS),
+            roles,
+            dto.organizationId
+        )
+    }
 
     /**
      * Send the primary email change mail
@@ -136,5 +177,6 @@ class AuthenticationController @Autowired constructor(
     ) = ok {
         userService.updatePrimaryEmailWithPrimaryEmailChangeToken(requestClient.userIdentifier, dto)
     }
+
 
 }
