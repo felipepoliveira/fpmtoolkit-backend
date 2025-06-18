@@ -1,5 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.features.organizationMembers
 
+import io.felipepoliveira.fpmtoolkit.BaseService
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.dao.Pagination
@@ -14,6 +15,7 @@ import io.felipepoliveira.fpmtoolkit.security.tokens.OrganizationMemberInviteTok
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.validation.SmartValidator
 import java.util.*
 
 @Service
@@ -24,7 +26,8 @@ class OrganizationMemberService @Autowired constructor(
     private val organizationDAO: OrganizationDAO,
     private val userDAO: UserDAO,
     private val userService: UserService,
-) {
+    smartValidator: SmartValidator
+) : BaseService(smartValidator) {
 
     companion object {
         const val MAXIMUM_AMOUNT_OF_FREE_MEMBERS: Int = 20
@@ -107,6 +110,16 @@ class OrganizationMemberService @Autowired constructor(
         return organizationMemberDAO.findByOrganizationAndUser(organization, user) ?: throw BusinessRuleException(
             BusinessRulesError.FORBIDDEN,
             "Could not found membership of user ${user.uuid} in organization ${organization.profileName}"
+        )
+    }
+
+    /**
+     * Return the OrganizationMemberModel UUID
+     */
+    fun findByUuid(memberUuid: String): OrganizationMemberModel {
+        return organizationMemberDAO.findByUuid(memberUuid) ?: throw BusinessRuleException(
+            error = BusinessRulesError.NOT_FOUND,
+            reason =  "Could not find organization member identified by uuid '$memberUuid'"
         )
     }
 
@@ -200,6 +213,34 @@ class OrganizationMemberService @Autowired constructor(
 
         organizationMemberDAO.delete(targetMemberToRemove)
         return targetMemberToRemove
+    }
+
+    /**
+     *
+     */
+    fun update(requesterUuid: String, targetMemberUuid: String, dto: UpdateOrganizationMemberDTO): OrganizationMemberModel {
+
+        // check for validation results
+        val validationResult = validate(dto)
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        // fetch the requester account
+        val requester = userService.assertFindByUuid(requesterUuid)
+
+        // assert target user exists
+        val targetMember = findByUuid(targetMemberUuid)
+
+        // assert that the requester has the required role for the operation
+        findByOrganizationAndUserOrForbidden(targetMember.organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_MEMBER_ADMINISTRATOR)
+
+        // update the target member in the database
+        targetMember.roles = dto.roles
+        organizationMemberDAO.update(targetMember)
+
+        return targetMember
     }
 
 }

@@ -190,7 +190,7 @@ class OrganizationService @Autowired constructor(
 
         // fetch organization, check if requester is a member, and has the specific role
         val targetOrganization = findByUuid(targetOrganizationUuid)
-        val requesterMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(
+        organizationMemberService.findByOrganizationAndUserOrForbidden(
             targetOrganization, requester
         ).assertIsOwnerOr(OrganizationMemberRoles.ORG_ADMINISTRATOR)
 

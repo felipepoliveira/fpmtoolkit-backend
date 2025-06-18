@@ -2,6 +2,7 @@ package io.felipepoliveira.fpmtoolkit.api.controllers
 
 import io.felipepoliveira.fpmtoolkit.api.security.auth.RequestClient
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.UpdateOrganizationMemberDTO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import jakarta.validation.constraints.NotBlank
@@ -10,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -65,6 +67,18 @@ class OrganizationMemberController @Autowired constructor(
                 page ?: 1
             )
         }
+    }
+
+    /**
+     * Update the user identified by the 'targetMemberUuid' parameter
+     */
+    @PutMapping("/{targetMemberUuid}")
+    fun update(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable targetMemberUuid: String,
+        @RequestBody dto: UpdateOrganizationMemberDTO
+    ) = ok {
+        organizationMemberService.update(requestClient.userIdentifier, targetMemberUuid, dto)
     }
 }
 

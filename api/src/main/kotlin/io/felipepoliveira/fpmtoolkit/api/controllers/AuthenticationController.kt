@@ -93,6 +93,8 @@ class AuthenticationController @Autowired constructor(
         @AuthenticationPrincipal requestClient: RequestClient,
     ) = ok { userService.assertFindByUuid(requestClient.userIdentifier) }
 
+    
+    @PostMapping("/tokens/refresh")
     fun refreshToken(
         @AuthenticationPrincipal requestClient: RequestClient,
         @RequestBody dto: RefreshTokenDTO,
@@ -106,7 +108,10 @@ class AuthenticationController @Autowired constructor(
         if (dto.organizationId != null) {
             val organization = organizationService.findByUuid(dto.organizationId)
 
-            val organizationMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requesterUser)
+            val organizationMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(
+                organization,
+                requesterUser
+            )
 
             roles = if (organizationMembership.isOrganizationOwner) {
                 OrganizationMemberRoles.entries.map { e -> e.toString() }.toTypedArray()

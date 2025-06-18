@@ -137,7 +137,7 @@ class UpdateOrganizationTests @Autowired constructor(
         updatedOrg.presentationName shouldBe dto.presentationName
     }
 
-    test("Test update organization success using the a member with all the required roles") {
+    test("Test update organization success using a member with all the required roles") {
         // Arrange
         val requester = mockedUserDAO.user10OfOrg1WithAllRoles()
         val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()

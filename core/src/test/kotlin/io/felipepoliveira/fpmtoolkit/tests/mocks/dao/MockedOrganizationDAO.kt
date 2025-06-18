@@ -36,46 +36,17 @@ class MockedOrganizationDAO @Autowired constructor(
         )
 
         // add the owner member
-        val ownerMemberSeeder = {
-            OrganizationMemberModel(
-                isOrganizationOwner = true,
-                organization = org,
-                user = mockedUserDAO.user1(),
-                id = 1,
-                roles = listOf(),
-                uuid = "1",
-            )
-        }
-        org.members.add(ownerMemberSeeder())
-        mockedOrganizationMemberDAO.mockedDatabase.add(MockedObject(ownerMemberSeeder))
-
+        org.members.add(mockedOrganizationMemberDAO.organization1OwnerMember(org))
         // add a member with all roles
-        val userWithAllRoles = {
-            OrganizationMemberModel(
-                isOrganizationOwner = false,
-                organization = org,
-                user = mockedUserDAO.user10OfOrg1WithAllRoles(),
-                roles = OrganizationMemberRoles.entries,
-                id = 10,
-                uuid = "10",
-            )
-        }
-        org.members.add(userWithAllRoles())
-        mockedOrganizationMemberDAO.mockedDatabase.add(MockedObject(userWithAllRoles))
-
+        org.members.add(mockedOrganizationMemberDAO.organization1MemberWithAllRoles(org))
         // add a member with no roles
-        val userWithNoRoles = {
-            OrganizationMemberModel(
-                isOrganizationOwner = false,
-                organization = org,
-                user = mockedUserDAO.user11OfOrg1WithNoRoles(),
-                roles = listOf(),
-                id = 11,
-                uuid = "11",
-            )
-        }
-        org.members.add(userWithNoRoles())
-        mockedOrganizationMemberDAO.mockedDatabase.add(MockedObject(userWithNoRoles))
+        org.members.add(mockedOrganizationMemberDAO.organization1MemberWithNoRoles(org))
+
+        mockedOrganizationMemberDAO.addOrganizationMembersInTheMockedDatabase(org,
+            { mockedOrganizationMemberDAO.organization1OwnerMember(org) },
+            { mockedOrganizationMemberDAO.organization1MemberWithAllRoles(org) },
+            { mockedOrganizationMemberDAO.organization1MemberWithNoRoles(org) },
+        )
 
         return org
     }

@@ -56,7 +56,7 @@ class OrganizationMemberModel(
         name = "role",
         nullable = false
     ) @Enumerated(EnumType.STRING)
-    val roles: Collection<OrganizationMemberRoles>,
+    var roles: Collection<OrganizationMemberRoles>,
 
     /**
      * The user associated in the organization membership

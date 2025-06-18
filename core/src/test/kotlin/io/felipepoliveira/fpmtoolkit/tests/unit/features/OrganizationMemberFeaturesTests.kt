@@ -4,7 +4,9 @@ import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteModel
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberModel
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberRoles
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.UpdateOrganizationMemberDTO
 import io.felipepoliveira.fpmtoolkit.security.tokens.OrganizationMemberInviteTokenProvider
 import io.felipepoliveira.fpmtoolkit.tests.UnitTestsConfiguration
 import io.felipepoliveira.fpmtoolkit.tests.mocks.dao.MockedOrganizationDAO
@@ -14,6 +16,7 @@ import io.felipepoliveira.fpmtoolkit.tests.mocks.dao.MockedUserDAO
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -111,6 +114,85 @@ class IngressByInviteTests @Autowired constructor(
         }
 
         // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class UpdateTests @Autowired constructor(
+    private val mockedOrganizationDAO: MockedOrganizationDAO,
+    private val mockedOrganizationMemberModel: MockedOrganizationMemberDAO,
+    private val mockedUserDAO: MockedUserDAO,
+    private val organizationMemberService: OrganizationMemberService,
+    private val organizationMemberInviteTokenProvider: OrganizationMemberInviteTokenProvider,
+) : FunSpec({
+
+    test("Assert that the owner of the organization can update the user") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val targetMemberOrg = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(targetMemberOrg)
+        val dto = UpdateOrganizationMemberDTO(
+            roles = listOf(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+        )
+
+        // Act
+        val updatedMember = organizationMemberService.update(requester.uuid, targetMember.uuid, dto)
+
+        // Assert
+        updatedMember.roles shouldContain OrganizationMemberRoles.ORG_ADMINISTRATOR
+    }
+
+    test("Assert that that a member of the same organization as the target with required roles can update") {
+        // Arrange
+        val requester = mockedUserDAO.user10OfOrg1WithAllRoles()
+        val targetMemberOrg = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(targetMemberOrg)
+        val dto = UpdateOrganizationMemberDTO(
+            roles = listOf(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+        )
+
+        // Act
+        val updatedMember = organizationMemberService.update(requester.uuid, targetMember.uuid, dto)
+
+        // Assert
+        updatedMember.roles shouldContain OrganizationMemberRoles.ORG_ADMINISTRATOR
+    }
+
+    test("Assert that a user with no roles in the same organization can not update the target member") {
+        // Arrange
+        val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
+        val targetMemberOrg = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(targetMemberOrg)
+        val dto = UpdateOrganizationMemberDTO(
+            roles = listOf(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.update(requester.uuid, targetMember.uuid, dto)
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that a user of X organization can not update the user from Y organization") {
+        // Arrange
+        val requester = mockedUserDAO.user2()
+        val targetMemberOrg = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(targetMemberOrg)
+        val dto = UpdateOrganizationMemberDTO(
+            roles = listOf(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.update(requester.uuid, targetMember.uuid, dto)
+        }
+
+        // Assert
         exception.error shouldBe BusinessRulesError.FORBIDDEN
     }
 })
