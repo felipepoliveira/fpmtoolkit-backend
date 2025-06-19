@@ -54,7 +54,8 @@ class OrganizationMemberModel(
         joinColumns = [JoinColumn(name = "organization_member_id")],
     ) @Column(
         name = "role",
-        nullable = false
+        nullable = false,
+        length = 60
     ) @Enumerated(EnumType.STRING)
     var roles: Collection<OrganizationMemberRoles>,
 

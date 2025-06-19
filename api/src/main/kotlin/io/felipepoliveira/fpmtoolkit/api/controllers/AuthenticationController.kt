@@ -65,11 +65,42 @@ class AuthenticationController @Autowired constructor(
         tokenAndPayload
     }
 
+    private fun getOrganizationMemberRoles(organizationId: String, requesterUser: UserModel): Array<String> {
+        val organization = organizationService.findByUuid(organizationId)
+
+        val organizationMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(
+            organization,
+            requesterUser
+        )
+
+        return if (organizationMembership.isOrganizationOwner) {
+            OrganizationMemberRoles.entries.map { e -> e.toString() }.toTypedArray()
+        } else {
+            organizationMembership.roles.map { r -> r.toString() }.toTypedArray()
+        }
+    }
+
     /**
      * Return the session data of the authenticated user
      */
     @GetMapping("/session")
-    fun getRequestClientSession(@AuthenticationPrincipal client: RequestClient) = ok { client }
+    fun getRequestClientSession(
+        @AuthenticationPrincipal client: RequestClient
+    ) = ok {
+
+        // if the organization id is given in the request, add the organization roles into it
+        if (client.organizationId != null) {
+            client.addRoles(
+                getOrganizationMemberRoles(
+                    client.organizationId,
+                    userService.assertFindByUuid(client.userIdentifier)
+                )
+            )
+        }
+
+        // return the client
+        client
+    }
 
     /**
      * Return the roles of the given user.
@@ -83,7 +114,7 @@ class AuthenticationController @Autowired constructor(
     fun isEmailAvailable(@PathVariable(name = "email") email: String) = ok {
         userService.isEmailAvailableToUseAsAccessCredential(email)
     }
-    
+
 
     /**
      * Return information about the authenticated user
@@ -93,31 +124,22 @@ class AuthenticationController @Autowired constructor(
         @AuthenticationPrincipal requestClient: RequestClient,
     ) = ok { userService.assertFindByUuid(requestClient.userIdentifier) }
 
-    
+
     @PostMapping("/tokens/refresh")
     fun refreshToken(
         @AuthenticationPrincipal requestClient: RequestClient,
         @RequestBody dto: RefreshTokenDTO,
         request: HttpServletRequest
     ) = ok {
-        var roles = arrayOf<String>()
-
         // if the user passed the organization id, check if the user is a member
         // and add its roles into the token based on its membership privileges
         val requesterUser = userService.findByUuid(requestClient.userIdentifier)
-        if (dto.organizationId != null) {
-            val organization = organizationService.findByUuid(dto.organizationId)
 
-            val organizationMembership = organizationMemberService.findByOrganizationAndUserOrForbidden(
-                organization,
-                requesterUser
-            )
-
-            roles = if (organizationMembership.isOrganizationOwner) {
-                OrganizationMemberRoles.entries.map { e -> e.toString() }.toTypedArray()
-            } else {
-                organizationMembership.roles.map { r -> r.toString() }.toTypedArray()
-            }
+        //
+        val roles = if (dto.organizationId != null) {
+            getOrganizationMemberRoles(dto.organizationId, requesterUser)
+        } else {
+            arrayOf()
         }
 
         // issue the token

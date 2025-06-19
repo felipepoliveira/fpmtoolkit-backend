@@ -13,10 +13,13 @@ import java.util.UUID
  * Parse the given Array<String> into a MutableCollection<GrantedAuthority> where each given role is added
  * with a "ROLE_$role" prefix.
  */
-fun fromRolesArrayStringToGrantedAuthorityCollection(roles: Array<String>): MutableCollection<GrantedAuthority> {
-    val authorities = mutableListOf<GrantedAuthority>()
+fun fromRolesArrayStringToGrantedAuthorityCollection(roles: Array<String>): MutableMap<String, GrantedAuthority> {
+    val authorities = mutableMapOf<String, GrantedAuthority>()
     for (role in roles) {
-        authorities.add(SimpleGrantedAuthority("ROLE_$role"))
+        val roleToAdd = "ROLE_$role"
+        if (!authorities.containsKey(roleToAdd)) {
+            authorities[roleToAdd] = SimpleGrantedAuthority(roleToAdd)
+        }
     }
 
     return authorities
@@ -32,13 +35,17 @@ class RequestClient(
      */
     val currentClientIdentifier: String,
     /**
+     * The organization id identified in the session
+     */
+    val organizationId: String?,
+    /**
      * The client identifier used while the session was being created
      */
     val originalClientIdentifier: String,
     /**
      * List of roles used in the session
      */
-    val roles: MutableCollection<GrantedAuthority>,
+    val roles: MutableMap<String, GrantedAuthority>,
     /**
      * The credentials used in the authentication process
      */
@@ -59,6 +66,7 @@ class RequestClient(
     constructor(tokenPayload: ApiAuthenticationTokenPayload, token: String, currentClientIdentifier: String) : this(
         userIdentifier = tokenPayload.userIdentifier.toString(),
         roles = fromRolesArrayStringToGrantedAuthorityCollection(tokenPayload.roles),
+        organizationId = tokenPayload.organizationId,
         sessionCredentials = token,
         sessionStartedAt = tokenPayload.issuedAt,
         sessionExpiresAt = tokenPayload.expiresAt,
@@ -85,26 +93,47 @@ class RequestClient(
         val sessionDuration = Duration.between(sessionStartedAt, Instant.now())
 
         // Consider a SAME SESSION situation where the user created a session in the same day = 12 hours
-        if (sessionDuration.toHours() < 12) {
-            roles.add(SimpleGrantedAuthority(Roles.STL_SAME_SESSION))
+        if (sessionDuration.toHours() < 12 && !roles.containsKey(Roles.STL_SAME_SESSION)) {
+            roles[Roles.STL_SAME_SESSION] = SimpleGrantedAuthority(Roles.STL_SAME_SESSION)
         }
 
         // Safe STL = Session of at least 1 hour
-        if (sessionDuration.toHours() < 1) {
-            roles.add(SimpleGrantedAuthority(Roles.STL_SECURE))
+        if (sessionDuration.toHours() < 1 && !roles.containsKey(Roles.STL_SECURE)) {
+            roles[Roles.STL_SECURE] = SimpleGrantedAuthority(Roles.STL_SECURE)
         }
 
         // Most safe STL = Session of at least 5 minutes
-        if (sessionDuration.toMinutes() < 5) {
-            roles.add(SimpleGrantedAuthority(Roles.STL_MOST_SECURE))
+        if (sessionDuration.toMinutes() < 5 && !roles.containsKey(Roles.STL_MOST_SECURE)) {
+            roles[Roles.STL_MOST_SECURE] = SimpleGrantedAuthority(Roles.STL_MOST_SECURE)
         }
     }
+
+    /**
+     * Add the given role into the roles of the request client. This method will automatically add
+     * the 'ROLE_' prefix for each entry given in this method
+     */
+    fun addRole(role: String) {
+        val roleToAdd = "ROLE_$role"
+        if (!this.roles.containsKey(roleToAdd)) {
+            this.roles[roleToAdd] = SimpleGrantedAuthority(roleToAdd)
+        }
+    }
+
+    /**
+     * Add the given roles array into the roles of the request client. This method will automatically add
+     * the 'ROLE_' prefix for each entry given in this method
+     */
+    fun addRoles(roles: Array<String>) {
+        roles.forEach { r -> addRole(r) }
+    }
+
+
 
     @JsonIgnore
     override fun getName(): String = userIdentifier
 
     @JsonIgnore
-    override fun getAuthorities(): MutableCollection<out GrantedAuthority> = roles
+    override fun getAuthorities(): MutableCollection<out GrantedAuthority> = roles.values
 
     @JsonIgnore
     override fun getCredentials() = sessionCredentials

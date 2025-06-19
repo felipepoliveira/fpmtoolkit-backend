@@ -218,6 +218,7 @@ class OrganizationMemberService @Autowired constructor(
     /**
      *
      */
+    @Transactional
     fun update(requesterUuid: String, targetMemberUuid: String, dto: UpdateOrganizationMemberDTO): OrganizationMemberModel {
 
         // check for validation results
