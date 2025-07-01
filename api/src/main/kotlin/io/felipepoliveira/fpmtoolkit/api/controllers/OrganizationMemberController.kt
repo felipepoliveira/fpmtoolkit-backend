@@ -1,13 +1,16 @@
 package io.felipepoliveira.fpmtoolkit.api.controllers
 
 import io.felipepoliveira.fpmtoolkit.api.security.auth.RequestClient
+import io.felipepoliveira.fpmtoolkit.api.security.auth.Roles
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.UpdateOrganizationMemberDTO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import jakarta.validation.constraints.NotBlank
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.access.annotation.Secured
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -42,6 +45,23 @@ class OrganizationMemberController @Autowired constructor(
 ) : BaseRestController() {
 
     /**
+     * Transform the target member (identified by 'targetMemberUuid') into the organization owner. This operation
+     * can only be made by the organization owner with the top tier STL level
+     */
+    @PutMapping("/{targetMemberUuid}/set-to-owner")
+    @Secured(Roles.STL_MOST_SECURE)
+    fun changeOrganizationOwner(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable(name = "targetMemberUuid") targetMemberUuid: String
+    ) = ok {
+        //
+        organizationMemberService.changeOrganizationOwner(
+            requestClient.userIdentifier,
+            targetMemberUuid
+        )
+    }
+
+    /**
      *
      */
     @GetMapping
@@ -67,6 +87,36 @@ class OrganizationMemberController @Autowired constructor(
                 page ?: 1
             )
         }
+    }
+
+    /**
+     * Return the membership account of the requester client in the given organization
+     */
+    @GetMapping("/me")
+    fun me(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable(name = "organizationUuid") organizationUuid: String,
+    ) = ok {
+        val organization = organizationService.findByUuid(organizationUuid)
+        val requester = userService.assertFindByUuid(requestClient.userIdentifier)
+
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+    }
+
+    /**
+     * Delete the user identified by the 'targetMemberUuid' parameter
+     */
+    @DeleteMapping("/{targetMemberUuid}")
+    fun removeOrganizationMember(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable organizationUuid: String,
+        @PathVariable targetMemberUuid: String
+    ) = ok {
+        organizationMemberService.removeOrganizationMember(
+            requestClient.userIdentifier,
+            organizationUuid,
+            targetMemberUuid
+        )
     }
 
     /**

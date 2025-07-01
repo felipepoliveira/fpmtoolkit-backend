@@ -34,7 +34,7 @@ class OrganizationMemberModel(
      * Flag that indicates if the member is the owner of the organization. Only one owner could exist in an organization
      */
     @field:Column(name = "is_owner", nullable = false)
-    val isOrganizationOwner: Boolean,
+    var isOrganizationOwner: Boolean,
 
     /**
      * The user associated in the organization membership
@@ -84,6 +84,11 @@ class OrganizationMemberModel(
         return assertIsOwnerOr(*extendedRoles.toTypedArray())
 
     }
+
+    /**
+     * Return a flag indicating if this member is from the same organization as the given one
+     */
+    fun isFromSameOrganization(another: OrganizationMemberModel) = this.organization.id == another.organization.id
 
     /**
      * Return a flag if this member is the owner of the organization or contains any of the given roles

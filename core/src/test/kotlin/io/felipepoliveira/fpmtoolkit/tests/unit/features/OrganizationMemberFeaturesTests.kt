@@ -58,6 +58,95 @@ class AddOrganizationMemberTests @Autowired constructor(
 
 @SpringBootTest
 @ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class ChangeOrganizationOwnerTests @Autowired constructor(
+    private val mockedOrganizationDAO: MockedOrganizationDAO,
+    private val mockedOrganizationMemberModel: MockedOrganizationMemberDAO,
+    private val mockedUserDAO: MockedUserDAO,
+    private val organizationMemberService: OrganizationMemberService,
+    private val organizationMemberInviteTokenProvider: OrganizationMemberInviteTokenProvider,
+) : FunSpec({
+
+    test("Asset that the owner can change the organization owner") {
+        // Arrange
+        val requester = mockedOrganizationMemberModel.organization1OwnerMember(
+            mockedOrganizationDAO.organization1OwnedByUser1()
+        )
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(requester.organization)
+
+        // Act
+        val updatedMember = organizationMemberService.changeOrganizationOwner(
+            requester.user.uuid,
+            targetMember.uuid
+        )
+
+        // Assert
+        updatedMember.uuid shouldBe targetMember.uuid
+        updatedMember.isOrganizationOwner shouldBe true
+    }
+
+    test("Assert that only organization owners can make this operation ") {
+        // Arrange
+        val requester = mockedOrganizationMemberModel.organization1MemberWithAllRoles(
+            mockedOrganizationDAO.organization1OwnedByUser1()
+        )
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(requester.organization)
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.changeOrganizationOwner(
+                requester.user.uuid,
+                targetMember.uuid
+            )
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that the requester is from the same organization as the target user") {
+        // Arrange
+        val requester = mockedUserDAO.user2()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(
+            mockedOrganizationDAO.organization1OwnedByUser1()
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.changeOrganizationOwner(
+                requester.uuid,
+                targetMember.uuid
+            )
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that requester can not set itself as the owner of the organization") {
+        // Arrange
+        val requester = mockedOrganizationMemberModel.organization1OwnerMember(
+            mockedOrganizationDAO.organization1OwnedByUser1()
+        )
+        val targetMember = mockedOrganizationMemberModel.organization1OwnerMember(
+            mockedOrganizationDAO.organization1OwnedByUser1()
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.changeOrganizationOwner(
+                requester.user.uuid,
+                targetMember.uuid
+            )
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
 class IngressByInviteTests @Autowired constructor(
     private val mockedOrganizationMemberInviteDAO: MockedOrganizationMemberInviteDAO,
     private val mockedUserDAO: MockedUserDAO,
@@ -114,6 +203,92 @@ class IngressByInviteTests @Autowired constructor(
         }
 
         // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class RemoveOrganizationMemberTests @Autowired constructor(
+    private val mockedOrganizationDAO: MockedOrganizationDAO,
+    private val mockedOrganizationMemberModel: MockedOrganizationMemberDAO,
+    private val mockedUserDAO: MockedUserDAO,
+    private val organizationMemberService: OrganizationMemberService,
+    private val organizationMemberInviteTokenProvider: OrganizationMemberInviteTokenProvider,
+) : FunSpec({
+    test("Assert that the organization owner can remove the member of its own organization") {
+
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(targetOrganization)
+
+        // Act
+        val removedOrganization = organizationMemberService.removeOrganizationMember(
+            requester.uuid,
+            targetOrganization.uuid,
+            targetMember.uuid
+            )
+
+        // Assert
+        removedOrganization.user.id shouldBe targetMember.user.id
+    }
+
+    test("Assert that the organization ADMINISTRATOR can remove the member of its own organization") {
+
+        // Arrange
+        val requester = mockedUserDAO.user10OfOrg1WithAllRoles()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithNoRoles(targetOrganization)
+
+        // Act
+        val removedOrganization = organizationMemberService.removeOrganizationMember(
+            requester.uuid,
+            targetOrganization.uuid,
+            targetMember.uuid
+        )
+
+        // Assert
+        removedOrganization.user.id shouldBe targetMember.user.id
+    }
+
+    test("Assert that the organization that is not the ADMINISTRATOR or OWNER can not remove the organization member") {
+
+        // Arrange
+        val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithAllRoles(targetOrganization)
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.removeOrganizationMember(
+                requester.uuid,
+                targetOrganization.uuid,
+                targetMember.uuid
+            )
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that the organization OWNER can not remove a member of other organization") {
+
+        // Arrange
+        val requester = mockedUserDAO.user2()
+        val targetOrganization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetMember = mockedOrganizationMemberModel.organization1MemberWithAllRoles(targetOrganization)
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            organizationMemberService.removeOrganizationMember(
+                requester.uuid,
+                targetOrganization.uuid,
+                targetMember.uuid
+            )
+        }
+
+        // Assert
         exception.error shouldBe BusinessRulesError.FORBIDDEN
     }
 })

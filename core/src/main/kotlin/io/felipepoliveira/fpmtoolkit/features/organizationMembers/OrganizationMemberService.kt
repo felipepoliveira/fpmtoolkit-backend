@@ -7,7 +7,6 @@ import io.felipepoliveira.fpmtoolkit.dao.Pagination
 import io.felipepoliveira.fpmtoolkit.features.organizationMemberInvite.OrganizationMemberInviteDAO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationDAO
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
-import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.users.UserDAO
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
@@ -78,6 +77,42 @@ class OrganizationMemberService @Autowired constructor(
     }
 
     /**
+     * Set a new organization owner. Only the organization owner can make this operation
+     */
+    @Transactional
+    fun changeOrganizationOwner(requesterUuid: String, targetMemberUuid: String): OrganizationMemberModel {
+        val requesterUser = userService.assertFindByUuid(requesterUuid)
+        val targetMember = findByUuid(targetMemberUuid)
+        val requesterMembership = findByOrganizationAndUserOrForbidden(targetMember.organization, requesterUser)
+
+        // Only the organization owner can do that
+        if (!requesterMembership.isOrganizationOwner) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "Only the organization owner can make this operation"
+            )
+        }
+
+        // The organization owner can not set itself as owner
+        if (requesterMembership.id == targetMember.id) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "You are currently the owner of the organization"
+            )
+        }
+
+        // update the models on the database,
+        // the requester will always receive 'ORG_ADMINISTRATOR' privileges after the update
+        requesterMembership.isOrganizationOwner = false
+        requesterMembership.roles = mutableListOf(OrganizationMemberRoles.ORG_ADMINISTRATOR)
+        targetMember.isOrganizationOwner = true
+        organizationMemberDAO.update(requesterMembership)
+        organizationMemberDAO.update(targetMember)
+
+        return targetMember
+    }
+
+    /**
      * Return data about the organization members of the given organization. Also, this method
      * will verify if the given requester is a member of the organization
      */
@@ -128,6 +163,7 @@ class OrganizationMemberService @Autowired constructor(
      * - The user can only be deleted if the requester is the owner or administrator of the target member organization
      * - The member can only be deleted if it is not the owner of the organization
      */
+    @Transactional
     fun removeOrganizationMember(requesterUuid: String, targetOrganizationUuid: String, targetMemberUuid: String): OrganizationMemberModel {
         // fetch the requester account
         val requester = userService.assertFindByUuid(requesterUuid)
@@ -139,11 +175,18 @@ class OrganizationMemberService @Autowired constructor(
         )
 
         // the requester can only delete the target member if it has the required role or is the owner
-        findByOrganizationAndUserOrForbidden(targetMemberToRemove.organization, requester)
+        val requesterMembership = findByOrganizationAndUserOrForbidden(targetMemberToRemove.organization, requester)
             .assertIsOwnerOr(OrganizationMemberRoles.ORG_ADMINISTRATOR)
 
-        return removeOrganizationMember(targetMemberToRemove)
+        // check if the target user is from the same organization as the requester membership in the given organization
+        if (targetMemberToRemove.organization.id != requesterMembership.organization.id) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "You can not remove a member of another organization"
+            )
+        }
 
+        return removeOrganizationMember(targetMemberToRemove)
     }
 
     /**

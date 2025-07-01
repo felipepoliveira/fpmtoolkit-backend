@@ -1,5 +1,8 @@
 package io.felipepoliveira.fpmtoolkit.api.controllers
 
+import io.felipepoliveira.fpmtoolkit.BusinessRuleException
+import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.api.controllers.dto.AuthenticateWithPasswordDTO
 import io.felipepoliveira.fpmtoolkit.api.controllers.dto.RefreshTokenDTO
 import io.felipepoliveira.fpmtoolkit.api.controllers.dto.SendPasswordRecoveryMailDTO
 import io.felipepoliveira.fpmtoolkit.api.security.auth.RequestClient
@@ -11,6 +14,7 @@ import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import io.felipepoliveira.fpmtoolkit.features.users.dto.*
+import io.felipepoliveira.fpmtoolkit.security.comparePassword
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.annotation.Secured
@@ -50,7 +54,7 @@ class AuthenticationController @Autowired constructor(
      * Create an authentication token using email and password combination
      */
     @PostMapping("/public/tokens/email-and-password")
-    fun generateAuthenticationToken(
+    fun generateAuthenticationTokenWithEmailAndPassword(
         @RequestBody dto: FindByPrimaryEmailAndPasswordDTO,
         request: HttpServletRequest
     ) = ok {
@@ -63,6 +67,34 @@ class AuthenticationController @Autowired constructor(
             null
         )
         tokenAndPayload
+    }
+
+    @PostMapping("/tokens/password")
+    fun generateAuthenticationTokenWithPassword(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @RequestBody dto: AuthenticateWithPasswordDTO,
+        request: HttpServletRequest
+    ) = ok {
+
+        // authenticate the user using the given password
+        val user = userService.assertFindByUuid(requestClient.userIdentifier)
+        if (!comparePassword(dto.password, user.hashedPassword)) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "Invalid credentials"
+            )
+        }
+
+        // issue a new authentication token
+        val tokenAndPayload = apiAuthenticationTokenProvider.issue(
+            user = user,
+            clientIdentifier = request.remoteAddr,
+            expiresAt = LocalDateTime.now().plusDays(30).toInstant(ZoneOffset.UTC),
+            roles = getSessionRoles(user),
+            null
+        )
+        tokenAndPayload
+
     }
 
     private fun getOrganizationMemberRoles(organizationId: String, requesterUser: UserModel): Array<String> {
@@ -148,7 +180,8 @@ class AuthenticationController @Autowired constructor(
             request.remoteAddr,
             Instant.now().plus(7, ChronoUnit.DAYS),
             roles,
-            dto.organizationId
+            dto.organizationId,
+            issuedAt = requestClient.sessionStartedAt
         )
     }
 

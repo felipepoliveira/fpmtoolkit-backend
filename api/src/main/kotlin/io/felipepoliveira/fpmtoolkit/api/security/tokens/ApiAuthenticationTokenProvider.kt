@@ -60,10 +60,9 @@ class ApiAuthenticationTokenProvider(
     private val contextualBeans: ContextualBeans
 ) {
     fun issue(
-        user: UserModel, clientIdentifier: String, expiresAt: Instant, roles: Array<String>, organizationId: String?
+        user: UserModel, clientIdentifier: String, expiresAt: Instant, roles: Array<String>, organizationId: String?,
+        issuedAt: Instant = Instant.now()
     ): ApiAuthenticationTokenAndPayload {
-
-        val issuedAt = Instant.now()
 
         // validate given expiresAt
         if (issuedAt.isAfter(expiresAt)) {
