@@ -36,6 +36,4 @@ abstract class BaseMockedDAO<IDType, ModelType> : DAO<IDType, ModelType> {
     override fun persist(m: ModelType): ModelType = m
 
     override fun update(m: ModelType): ModelType = m
-
-    override fun updateAll(m: Collection<ModelType>) = m
 }

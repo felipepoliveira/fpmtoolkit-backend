@@ -37,7 +37,7 @@ class UserModel(
     @field:Column(name = "preferred_region", length = 8, nullable = false)
     @field:Enumerated(EnumType.STRING)
     @field:NotNull
-    val preferredRegion: I18nRegion,
+    var preferredRegion: I18nRegion,
 
     /**
      * The user primary email
@@ -59,7 +59,7 @@ class UserModel(
     @field:Column(name = "presentation_name", length = 60, nullable = false)
     @field:NotBlank
     @field:Size(max = 60)
-    val presentationName: String,
+    var presentationName: String,
 
     /**
      * The UUID of the user

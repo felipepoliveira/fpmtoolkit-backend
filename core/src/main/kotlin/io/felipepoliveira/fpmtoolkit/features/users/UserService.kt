@@ -5,6 +5,7 @@ import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
 import io.felipepoliveira.fpmtoolkit.beans.context.ContextualBeans
 import io.felipepoliveira.fpmtoolkit.commons.io.RandomString
+import io.felipepoliveira.fpmtoolkit.ext.addError
 import io.felipepoliveira.fpmtoolkit.features.users.dto.*
 import io.felipepoliveira.fpmtoolkitio.felipepoliveira.fpmtoolkit.features.users.dto.IsEmailAvailableDTO
 import io.felipepoliveira.fpmtoolkit.security.PasswordRank
@@ -277,6 +278,41 @@ class UserService @Autowired constructor(
     }
 
     /**
+     * Update the password of the user identified by 'requesterUUID' using its current password as authentication method
+     */
+    @Transactional
+    fun updatePassword(requesterUUID: String, dto: UpdatePasswordDTO): UserModel {
+
+        // validate DTO
+        val validationResult = validate(dto)
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+        // fetch the requester account
+        val userAccount = assertFindByUuid(requesterUUID)
+
+        // check the current password
+        if (!comparePassword(dto.currentPassword, userAccount.hashedPassword)) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "Invalid credentials"
+            )
+        }
+
+        // check if the new password is safe
+        if (!calculatePasswordRank(dto.newPassword).isAtLeast(PasswordRank.Acceptable)) {
+            validationResult.addError("newPassword", "Password safety was not accepted")
+            throw BusinessRuleException(validationResult)
+        }
+
+        // update the user password
+        userAccount.hashedPassword = hashPassword(dto.newPassword)
+        userDAO.update(userAccount)
+
+        return userAccount
+    }
+
+    /**
      * Change the user password using a password recovery token
      */
     @Transactional
@@ -310,6 +346,29 @@ class UserService @Autowired constructor(
         userDAO.update(user)
 
         return user
+    }
+
+    /**
+     * Update the user account identified by the 'requesterUserUuid' parameter
+     */
+    @Transactional
+    fun updateUser(requesterUserUuid: String, dto: UpdateUserDTO): UserModel {
+
+        val targetUser = assertFindByUuid(requesterUserUuid)
+
+        // validate DTO
+        val validationResult = validate(dto)
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        // update the user in the database
+        targetUser.presentationName = dto.presentationName
+        targetUser.preferredRegion = dto.preferredRegion
+        userDAO.update(targetUser)
+
+        return targetUser
+
     }
 
     /**

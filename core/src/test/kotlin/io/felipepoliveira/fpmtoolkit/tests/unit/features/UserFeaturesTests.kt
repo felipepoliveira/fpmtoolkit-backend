@@ -508,3 +508,123 @@ class UpdatePrimaryEmailWithPrimaryEmailChangeTokenTests @Autowired constructor(
     }
 })
 
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class UpdatePasswordTests @Autowired constructor(
+    private val mockedUserDAO: MockedUserDAO,
+    private val userService: UserService,
+) : FunSpec({
+
+    test("Test if password was changed successfully") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val dto = UpdatePasswordDTO(
+            currentPassword = mockedUserDAO.defaultPassword(),
+            newPassword = "NewSafePassword1!"
+        )
+
+        // Act
+        val updatedUser = userService.updatePassword(requester.uuid, dto)
+
+        // Assert
+        comparePassword(dto.newPassword, updatedUser.hashedPassword) shouldBe true
+    }
+
+    test("Test if fails on invalid DTO") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val dto = UpdatePasswordDTO(
+            currentPassword = "",
+            newPassword = ""
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            userService.updatePassword(requester.uuid, dto)
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.VALIDATION
+        val exceptionDetails = exception.details.shouldNotBeNull()
+        exceptionDetails.shouldContainKeys("currentPassword")
+        exceptionDetails.shouldContainKeys("newPassword")
+    }
+
+    test("Test if fails on invalid current password") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val dto = UpdatePasswordDTO(
+            currentPassword = "NotTheCurrentPassword",
+            newPassword = "NewSafePassword1!"
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            userService.updatePassword(requester.uuid, dto)
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Test if fails on invalid current password") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val dto = UpdatePasswordDTO(
+            currentPassword = mockedUserDAO.defaultPassword(),
+            newPassword = "unsafePassword"
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            userService.updatePassword(requester.uuid, dto)
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.VALIDATION
+        val exceptionDetails = exception.details.shouldNotBeNull()
+        exceptionDetails.shouldContainKeys("newPassword")
+    }
+
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class UpdateUserTests @Autowired constructor(
+    private val mockedUserDAO: MockedUserDAO,
+    private val userService: UserService,
+) : FunSpec({
+
+    test("Tests if user can be updated successfully") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val dto = UpdateUserDTO(
+            presentationName = "Updated name",
+            preferredRegion = I18nRegion.PT_BR,
+        )
+
+        // Act
+        val updatedUser = userService.updateUser(requester.uuid, dto)
+
+        // Assert
+        updatedUser.presentationName shouldBe dto.presentationName
+        updatedUser.preferredRegion shouldBe dto.preferredRegion
+    }
+
+    test("Test if fails on invalid DTO") {
+        // Arrange
+        val requester = mockedUserDAO.user1()
+        val dto = UpdateUserDTO(
+            presentationName = "",
+            preferredRegion = I18nRegion.PT_BR,
+        )
+
+        // Act
+        val exception = shouldThrow<BusinessRuleException> {
+            userService.updateUser(requester.uuid, dto)
+        }
+
+        // Assert
+        exception.error shouldBe BusinessRulesError.VALIDATION
+    }
+})
