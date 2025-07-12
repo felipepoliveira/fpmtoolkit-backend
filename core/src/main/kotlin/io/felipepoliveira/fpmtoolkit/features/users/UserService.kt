@@ -285,6 +285,15 @@ class UserService @Autowired constructor(
 
         // validate DTO
         val validationResult = validate(dto)
+
+        // check if both password is the same
+        if (dto.newPassword == dto.currentPassword) {
+            validationResult.addError(
+                "newPassword",
+                "The new password can not be the same as the current password"
+            )
+        }
+
         if (validationResult.hasErrors()) {
             throw BusinessRuleException(validationResult)
         }
@@ -301,8 +310,10 @@ class UserService @Autowired constructor(
 
         // check if the new password is safe
         if (!calculatePasswordRank(dto.newPassword).isAtLeast(PasswordRank.Acceptable)) {
-            validationResult.addError("newPassword", "Password safety was not accepted")
-            throw BusinessRuleException(validationResult)
+            throw BusinessRuleException(
+                error = BusinessRulesError.INVALID_PASSWORD,
+                reason = "The given new password was considered unsafe by the server standards"
+            )
         }
 
         // update the user password
