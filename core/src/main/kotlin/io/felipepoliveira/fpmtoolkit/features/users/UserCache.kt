@@ -47,7 +47,7 @@ class UserCache @Autowired constructor(
 
     fun putPrimaryMailChangeOnTimeout(requester: UserModel) {
         val key = "PRIMARY_EMAIL_CHANGE_${requester.uuid}"
-        val timeout = Duration.ofMinutes(3)
+        val timeout = Duration.ofMinutes(1)
         cacheHandler.put(key, timeout.toSeconds().toString(), timeout)
     }
 
