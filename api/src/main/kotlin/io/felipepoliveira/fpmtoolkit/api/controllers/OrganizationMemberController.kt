@@ -71,12 +71,14 @@ class OrganizationMemberController @Autowired constructor(
         @RequestParam(name = "pagination", required = false) returnPagination: Boolean?,
         @RequestParam(name = "itemsPerPage", required = false) itemsPerPage: Int?,
         @RequestParam(name = "page", required = false) page: Int?,
+        @RequestParam(name = "queryField", required = false) queryField: String?,
     ) = ok {
         if (returnPagination == true) {
             organizationMemberService.paginationByOrganization(
                 organizationService.findByUuidAndCheckIfUserIsAMember(requestClient.userIdentifier, organizationUuid),
                 userService.findByUuid(requestClient.userIdentifier),
-                itemsPerPage ?: OrganizationMemberService.PAGINATION_LIMIT
+                itemsPerPage ?: OrganizationMemberService.PAGINATION_LIMIT,
+                queryField,
             )
         }
         else {
@@ -84,7 +86,8 @@ class OrganizationMemberController @Autowired constructor(
                 organizationService.findByUuidAndCheckIfUserIsAMember(requestClient.userIdentifier, organizationUuid),
                 userService.findByUuid(requestClient.userIdentifier),
                 itemsPerPage ?: OrganizationMemberService.PAGINATION_LIMIT,
-                page ?: 1
+                page ?: 1,
+                queryField
             )
         }
     }

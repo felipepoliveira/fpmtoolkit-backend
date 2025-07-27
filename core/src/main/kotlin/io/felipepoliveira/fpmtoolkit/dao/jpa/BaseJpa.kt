@@ -102,11 +102,23 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
         private val source: HqlSmartQuery<ModelType>
     ) {
 
+        private val parameters = mutableMapOf<String, Any>()
+
         /**
          * Add a AND clause to the existing WHERE HQL query string
          */
         fun and(whereHql: String): HqlSmartQueryWhereClause<ModelType> {
             source.hqlWherePart += " AND $whereHql"
+            return this
+        }
+
+        fun andStartQueryGroup(whereHql: String): HqlSmartQueryWhereClause<ModelType> {
+            source.hqlWherePart += " AND ($whereHql"
+            return this
+        }
+
+        fun closeQueryGroup(): HqlSmartQueryWhereClause<ModelType> {
+            source.hqlWherePart += " )"
             return this
         }
 
@@ -120,7 +132,20 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
             return this
         }
 
-        fun prepare() = source.prepare()
+        fun prepare(): Query {
+            val jpaQuery = source.prepare()
+            // add all parameters into the query
+            for (parameter in parameters) {
+                jpaQuery.setParameter(parameter.key, parameter.value)
+            }
+
+            return jpaQuery
+        }
+
+        fun <T> setParameter(key: String, value: T): HqlSmartQueryWhereClause<ModelType> {
+            parameters[key] = value as Any
+            return this
+        }
     }
 
 }

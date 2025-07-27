@@ -50,7 +50,7 @@ class OrganizationMemberService @Autowired constructor(
         }
 
         // check if the maximum amount of members per organization has being reached
-        val paginationOfOrgMembers = organizationMemberDAO.paginationByOrganization(organization, 1)
+        val paginationOfOrgMembers = organizationMemberDAO.paginationByOrganization(organization, null, 1)
         if (paginationOfOrgMembers.totalRecords >= MAXIMUM_AMOUNT_OF_FREE_MEMBERS) {
             throw BusinessRuleException(
                 BusinessRulesError.PAYMENT_REQUIRED,
@@ -117,11 +117,15 @@ class OrganizationMemberService @Autowired constructor(
      * will verify if the given requester is a member of the organization
      */
     fun findByOrganization(organization: OrganizationModel, requester: UserModel,
-                           itemsPerPage: Int, page: Int): Collection<OrganizationMemberModel> {
-        //TODO implement unit test
-        val requesterMembership = findByOrganizationAndUserOrForbidden(organization, requester)
+                           itemsPerPage: Int, page: Int,
+                           queryField: String?): Collection<OrganizationMemberModel> {
+        // assert that requester is from the same organization
+        findByOrganizationAndUserOrForbidden(organization, requester)
+
+
         return organizationMemberDAO.findByOrganization(
             organization,
+            queryField,
             itemsPerPage.coerceIn(1..PAGINATION_LIMIT),
             page.coerceAtLeast(1)
         )
@@ -131,10 +135,14 @@ class OrganizationMemberService @Autowired constructor(
      * Return pagination metadata about the organization members of the given organization. Also, this method
      * will verify if the given requester is a member of the organization
      */
-    fun paginationByOrganization(organization: OrganizationModel, requester: UserModel, itemsPerPage: Int): Pagination {
-        //TODO implement unit test
-        val requesterMembership = findByOrganizationAndUserOrForbidden(organization, requester)
-        return organizationMemberDAO.paginationByOrganization(organization, itemsPerPage.coerceIn(1..PAGINATION_LIMIT))
+    fun paginationByOrganization(organization: OrganizationModel, requester: UserModel, itemsPerPage: Int, queryField: String?): Pagination {
+        // Assert that requester is from the same organization
+        findByOrganizationAndUserOrForbidden(organization, requester)
+
+
+        return organizationMemberDAO.paginationByOrganization(
+            organization, queryField, itemsPerPage.coerceIn(1..PAGINATION_LIMIT)
+        )
     }
 
     /**

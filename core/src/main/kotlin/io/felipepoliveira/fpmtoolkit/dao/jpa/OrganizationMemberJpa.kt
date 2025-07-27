@@ -39,18 +39,41 @@ class OrganizationMemberJpa : OrganizationMemberDAO, BaseJpa<Long, OrganizationM
             .fetchFirst()
     }
 
-    private fun queryByOrganization(hsq: HqlSmartQuery<OrganizationMemberModel>, organization: OrganizationModel): Query {
-        return hsq.where("om.organization.id = :organizationId")
-            .prepare()
+    private fun queryByOrganization(
+        hsq: HqlSmartQuery<OrganizationMemberModel>,
+        queryField: String?,
+        organization: OrganizationModel
+    ): Query {
+
+        // only join if query parameters is not null
+        if(!queryField.isNullOrBlank()) {
+            hsq.join("om.user", "memberUser")
+        }
+
+        // add default filters
+        val whereFilters = hsq.where("om.organization.id = :organizationId")
             .setParameter("organizationId", organization.id)
+
+        // add optional filters
+        if (!queryField.isNullOrBlank()) {
+            whereFilters.andStartQueryGroup("memberUser.presentationName LIKE :queryField")
+                .or("memberUser.primaryEmail LIKE :queryField")
+                .closeQueryGroup()
+                .setParameter("queryField", "$queryField%")
+        }
+
+        // return the query
+        return whereFilters.prepare()
+
     }
 
     override fun findByOrganization(
         organization: OrganizationModel,
+        queryField: String?,
         itemsPerPage: Int,
         page: Int
     ): Collection<OrganizationMemberModel> {
-        return queryByOrganization(query("om"), organization)
+        return queryByOrganization(query("om"), queryField, organization)
             .fetchAllPaginated(itemsPerPage, page)
     }
 
@@ -67,8 +90,12 @@ class OrganizationMemberJpa : OrganizationMemberDAO, BaseJpa<Long, OrganizationM
             .fetchFirst()
     }
 
-    override fun paginationByOrganization(organization: OrganizationModel, itemsPerPage: Int): Pagination {
-        return queryByOrganization(query("om").asPagination(), organization)
+    override fun paginationByOrganization(
+        organization: OrganizationModel,
+        queryField: String?,
+        itemsPerPage: Int
+    ): Pagination {
+        return queryByOrganization(query("om").asPagination(), queryField, organization)
             .fetchPagination(itemsPerPage)
     }
 

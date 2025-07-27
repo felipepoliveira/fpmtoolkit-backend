@@ -14,12 +14,12 @@ interface OrganizationMemberInviteDAO : DAO<Long, OrganizationMemberInviteModel>
     /**
      * Find all OrganizationMemberInviteModel of the given organization using pagination
      */
-    fun findByOrganization(organization: OrganizationModel, limit: Int, page: Int): Collection<OrganizationMemberInviteModel>
+    fun findByOrganization(organization: OrganizationModel, limit: Int, page: Int, queryField: String?): Collection<OrganizationMemberInviteModel>
 
     /**
      * Fetch pagination metadata of all OrganizationMemberInviteModel of the given organization
      */
-    fun paginationByOrganization(organization: OrganizationModel, limit: Int): Pagination
+    fun paginationByOrganization(organization: OrganizationModel, limit: Int, queryField: String?): Pagination
 
     /**
      * Find a OrganizationMemberInviteModel by its uuid

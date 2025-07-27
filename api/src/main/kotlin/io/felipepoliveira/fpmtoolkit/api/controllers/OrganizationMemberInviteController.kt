@@ -54,18 +54,23 @@ class OrganizationMemberInviteController @Autowired constructor(
         @PathVariable(name = "organizationUuid") organizationUUID: String,
         @RequestParam(name = "limit", required = false) limit: Int?,
         @RequestParam(name = "page", required = false) page: Int?,
-        @RequestParam(name = "pagination", required = false) returnPagination: Boolean?
+        @RequestParam(name = "pagination", required = false) returnPagination: Boolean?,
+        @RequestParam(name = "queryField", required = false) queryField: String?,
     ) = ok {
         if (returnPagination == true) {
             organizationMemberInviteService.paginationByOrganization(
+                requestClient.userIdentifier,
                 organizationUUID,
                 limit ?: OrganizationMemberInviteService.PAGINATION_LIMIT,
+                queryField
             )
         } else {
             organizationMemberInviteService.findByOrganization(
+                requestClient.userIdentifier,
                 organizationUUID,
                 limit ?: OrganizationMemberInviteService.PAGINATION_LIMIT,
-                page ?: 1
+                page ?: 1,
+                queryField
             )
         }
     }

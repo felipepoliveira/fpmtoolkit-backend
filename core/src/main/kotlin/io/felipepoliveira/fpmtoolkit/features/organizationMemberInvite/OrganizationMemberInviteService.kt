@@ -72,7 +72,7 @@ class OrganizationMemberInviteService @Autowired constructor(
         }
 
         // check for invite limit
-        val paginationOfInvites = organizationMemberInviteDAO.paginationByOrganization(organization, 1)
+        val paginationOfInvites = organizationMemberInviteDAO.paginationByOrganization(organization, 1, null)
         if (paginationOfInvites.totalRecords >= LIMIT_OF_INVITES_PER_ORGANIZATION) {
             throw BusinessRuleException(
                 reason = "Maximum amount of pending invites limit reached",
@@ -107,18 +107,33 @@ class OrganizationMemberInviteService @Autowired constructor(
         return findByUuid(decodedInviteToken.inviteId)
     }
 
-    fun findByOrganization(organizationUuid: String, limit: Int, page: Int): Collection<OrganizationMemberInviteModel> {
+    fun findByOrganization(requesterUuid: String, organizationUuid: String, limit: Int, page: Int, queryField: String?): Collection<OrganizationMemberInviteModel> {
+        // assert requester has authorization to fetch data
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val organization = organizationService.findByUuid(organizationUuid)
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_MEMBER_ADMINISTRATOR)
+
+
         return organizationMemberInviteDAO.findByOrganization(
             organizationService.findByUuid(organizationUuid),
             limit.coerceIn(1..PAGINATION_LIMIT),
-            page.coerceAtLeast(1)
+            page.coerceAtLeast(1),
+            queryField
         )
     }
 
-    fun paginationByOrganization(organizationUuid: String, limit: Int): Pagination {
+    fun paginationByOrganization(requesterUuid: String, organizationUuid: String, limit: Int, queryField: String?): Pagination {
+        // assert requester has authorization to fetch data
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val organization = organizationService.findByUuid(organizationUuid)
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_MEMBER_ADMINISTRATOR)
+
         return organizationMemberInviteDAO.paginationByOrganization(
             organizationService.findByUuid(organizationUuid),
             limit.coerceIn(1..PAGINATION_LIMIT),
+            queryField
         )
     }
 

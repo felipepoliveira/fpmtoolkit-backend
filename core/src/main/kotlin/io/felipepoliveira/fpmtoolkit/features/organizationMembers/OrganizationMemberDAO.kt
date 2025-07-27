@@ -16,7 +16,7 @@ interface OrganizationMemberDAO : DAO<Long, OrganizationMemberModel> {
     /**
      * Return the OrganizationMemberModel from a organization using pagination
      */
-    fun findByOrganization(organization: OrganizationModel, itemsPerPage: Int, page: Int): Collection<OrganizationMemberModel>
+    fun findByOrganization(organization: OrganizationModel, queryField: String?, itemsPerPage: Int, page: Int): Collection<OrganizationMemberModel>
 
     /**
      * Find a member of the given organization identified by the given primary email
@@ -31,7 +31,7 @@ interface OrganizationMemberDAO : DAO<Long, OrganizationMemberModel> {
     /**
      * Return Pagination metadata of the members of the given organization
      */
-    fun paginationByOrganization(organization: OrganizationModel, itemsPerPage: Int): Pagination
+    fun paginationByOrganization(organization: OrganizationModel, queryField: String?, itemsPerPage: Int): Pagination
 
     /**
      * Find a OrganizationMemberModel identified by the given UUID. If the member is not found this method will

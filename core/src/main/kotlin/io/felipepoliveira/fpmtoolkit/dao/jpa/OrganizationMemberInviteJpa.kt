@@ -29,26 +29,37 @@ class OrganizationMemberInviteJpa : OrganizationMemberInviteDAO, BaseJpa<Long, O
     private fun queryByOrganization(
         hql: HqlSmartQuery<OrganizationMemberInviteModel>,
         organization: OrganizationModel,
+        queryField: String?,
         ): Query {
-        return hql
+
+        val whereFilters =  hql
             .where("invite.organization.id = :organizationId")
-            .prepare()
+
+        if (!queryField.isNullOrBlank()) {
+            whereFilters
+                .andStartQueryGroup("invite.memberEmail LIKE :queryField")
+                .closeQueryGroup()
+                .setParameter("queryField", "$queryField%")
+        }
+
+        return whereFilters.prepare()
             .setParameter("organizationId", organization.id)
     }
 
     override fun findByOrganization(
         organization: OrganizationModel,
         limit: Int,
-        page: Int
+        page: Int,
+        queryField: String?,
     ): Collection<OrganizationMemberInviteModel> {
         return queryByOrganization(
-            query("invite"), organization
+            query("invite"), organization, queryField
         ).fetchAllPaginated(limit, page)
     }
 
-    override fun paginationByOrganization(organization: OrganizationModel, limit: Int): Pagination {
+    override fun paginationByOrganization(organization: OrganizationModel, limit: Int, queryField: String?,): Pagination {
         return queryByOrganization(
-            paginatedQuery("invite"), organization
+            paginatedQuery("invite"), organization, queryField
         ).fetchPagination(limit)
     }
 
