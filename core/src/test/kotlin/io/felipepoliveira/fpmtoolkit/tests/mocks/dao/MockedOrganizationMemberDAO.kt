@@ -65,8 +65,9 @@ class MockedOrganizationMemberDAO @Autowired constructor(
 
     override fun findByOrganization(
         organization: OrganizationModel,
+        queryField: String?,
         itemsPerPage: Int,
-        page: Int
+        page: Int,
     ): Collection<OrganizationMemberModel> {
         return mock(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
     }
@@ -87,7 +88,7 @@ class MockedOrganizationMemberDAO @Autowired constructor(
         })
     }
 
-    override fun paginationByOrganization(organization: OrganizationModel, itemsPerPage: Int): Pagination {
+    override fun paginationByOrganization(organization: OrganizationModel, queryField: String?, itemsPerPage: Int): Pagination {
         return mockPagination(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
     }
 

@@ -118,7 +118,7 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
         }
 
         fun closeQueryGroup(): HqlSmartQueryWhereClause<ModelType> {
-            source.hqlWherePart += " )"
+            source.hqlWherePart += ")"
             return this
         }
 

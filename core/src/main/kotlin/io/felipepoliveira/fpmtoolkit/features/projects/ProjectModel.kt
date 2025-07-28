@@ -1,0 +1,60 @@
+package io.felipepoliveira.fpmtoolkit.features.projects
+
+import com.fasterxml.jackson.annotation.JsonIgnore
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
+import jakarta.persistence.*
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
+import java.time.LocalDateTime
+
+@Entity
+@Table(name = "project", indexes = [
+    Index(name = "UI_uuid_AT_project", columnList = "uuid", unique = true),
+    Index(name = "UI_organization_id_AND_profile_name_AT_project", columnList = "organization_id, profile_name", unique = true),
+])
+class ProjectModel(
+    /**
+     * The project relational id
+     */
+    @field:Id
+    @field:GeneratedValue(strategy = GenerationType.IDENTITY)
+    @field:JsonIgnore
+    val id: Long?,
+
+    /**
+     * The project UUID
+     */
+    @field:Column(name = "uuid", nullable = false, length = 40)
+    val uuid: String,
+
+    /**
+     * Mark the owner of the organization
+     */
+    @field:ManyToOne(optional = false, fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @field:JoinColumn(name = "organization_id", nullable = false)
+    @field:JsonIgnore
+    val owner: OrganizationModel,
+
+    /**
+     * The name of the project
+     */
+    @field:Column(name = "name", nullable = false, length = 140)
+    @field:NotBlank
+    @field:Size(min = 1, max = 140)
+    val name: String,
+
+    /**
+     * The profile name of the project
+     */
+    @field:Column(name = "profile_name", nullable = false, length = 60)
+    @field:NotBlank
+    @field:Size(min = 1, max = 60)
+    val profileName: String,
+
+    /**
+     * When the project was created
+     */
+    @field:Column(name = "created_at", nullable = false)
+    @field:Temporal(TemporalType.TIMESTAMP)
+    val createdAt: LocalDateTime,
+)

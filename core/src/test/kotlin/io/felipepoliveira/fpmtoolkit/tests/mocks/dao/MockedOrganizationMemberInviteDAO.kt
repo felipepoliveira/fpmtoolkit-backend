@@ -51,12 +51,13 @@ class MockedOrganizationMemberInviteDAO @Autowired constructor(
     override fun findByOrganization(
         organization: OrganizationModel,
         limit: Int,
-        page: Int
+        page: Int,
+        queryField: String?,
     ): Collection<OrganizationMemberInviteModel> {
         return mock(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
     }
 
-    override fun paginationByOrganization(organization: OrganizationModel, limit: Int): Pagination {
+    override fun paginationByOrganization(organization: OrganizationModel, limit: Int, queryField: String?,): Pagination {
         return mockPagination(mockedDatabase.filter { m -> m.reference.organization.id == organization.id })
     }
 

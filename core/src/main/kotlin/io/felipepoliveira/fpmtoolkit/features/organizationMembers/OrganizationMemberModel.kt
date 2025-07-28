@@ -122,4 +122,10 @@ enum class OrganizationMemberRoles {
      */
     ORG_MEMBER_ADMINISTRATOR,
 
+    /**
+     * They can manage the projects of the organization. That includes:
+     * - Create a new project
+     */
+    ORG_PROJECT_ADMINISTRATOR,
+
 }

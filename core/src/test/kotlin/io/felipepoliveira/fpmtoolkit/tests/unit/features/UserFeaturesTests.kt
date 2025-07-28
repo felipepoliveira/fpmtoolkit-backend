@@ -567,7 +567,7 @@ class UpdatePasswordTests @Autowired constructor(
         exception.error shouldBe BusinessRulesError.FORBIDDEN
     }
 
-    test("Test if fails on invalid current password") {
+    test("Test if fails on unsafe new password") {
         // Arrange
         val requester = mockedUserDAO.user1()
         val dto = UpdatePasswordDTO(
@@ -581,9 +581,7 @@ class UpdatePasswordTests @Autowired constructor(
         }
 
         // Assert
-        exception.error shouldBe BusinessRulesError.VALIDATION
-        val exceptionDetails = exception.details.shouldNotBeNull()
-        exceptionDetails.shouldContainKeys("newPassword")
+        exception.error shouldBe BusinessRulesError.INVALID_PASSWORD
     }
 
 })
