@@ -21,7 +21,13 @@ class ProjectService @Autowired constructor(
     smartValidator: SmartValidator,
 ) : BaseService(smartValidator) {
 
+    companion object {
+        const val PAGINATION_LIMIT = 20
+    }
 
+    /**
+     * Create a new project into the platform
+     */
     fun createProject(requester: UserModel, organization: OrganizationModel, dto: CreateOrUpdateProjectDTO): ProjectModel {
         // check for validation errors
         val validationResult = validate(dto)
@@ -47,10 +53,31 @@ class ProjectService @Autowired constructor(
             uuid = UUID.randomUUID().toString(),
             profileName = dto.profileName,
             owner = organization,
+            shortDescription = "",
+            members = arrayListOf()
         )
         projectDAO.persist(project)
 
         return project
     }
 
+    fun findByOwner(
+        requester: UserModel,
+        organization: OrganizationModel,
+        queryField: String? = null,
+        page: Int = 1,
+        limit: Int = PAGINATION_LIMIT,
+    ): Collection<ProjectModel> {
+
+        // if the requester has PROJECT_MANAGER privileges it can fetch all projects on the organization
+
+        return projectDAO.findByOwner(
+            owner = organization,
+            page = page.coerceAtLeast(1),
+            itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
+            queryField = queryField
+        )
+
+        // otherwise it can only fetch projects where it is part on
+    }
 }

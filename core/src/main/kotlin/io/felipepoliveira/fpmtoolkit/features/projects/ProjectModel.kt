@@ -1,7 +1,9 @@
 package io.felipepoliveira.fpmtoolkit.features.projects
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberModel
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
+import io.felipepoliveira.fpmtoolkit.features.projectMembers.ProjectMemberModel
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -57,4 +59,17 @@ class ProjectModel(
     @field:Column(name = "created_at", nullable = false)
     @field:Temporal(TemporalType.TIMESTAMP)
     val createdAt: LocalDateTime,
+
+    /**
+     * Store a short description of the project.
+     */
+    @field:Column(name = "short_description", nullable = false, length = 500)
+    val shortDescription: String,
+
+    /**
+     * Bidirectional reference to the members that is originally mapped on ProjectMemberModel.project field
+     */
+    @field:JsonIgnore
+    @field:OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    val members: MutableList<ProjectMemberModel>,
 )
