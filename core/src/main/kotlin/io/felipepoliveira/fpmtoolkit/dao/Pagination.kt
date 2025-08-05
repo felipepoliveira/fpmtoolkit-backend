@@ -6,5 +6,6 @@ package io.felipepoliveira.fpmtoolkit.dao
 class Pagination(
     val itemsPerPage: Int,
     val totalRecords: Long,
-    val currentPage: Int
+    val currentPage: Int,
+    val totalPages: Int,
 )

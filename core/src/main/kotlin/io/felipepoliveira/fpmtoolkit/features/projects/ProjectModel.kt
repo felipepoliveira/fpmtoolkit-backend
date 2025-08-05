@@ -43,7 +43,7 @@ class ProjectModel(
     @field:Column(name = "name", nullable = false, length = 140)
     @field:NotBlank
     @field:Size(min = 1, max = 140)
-    val name: String,
+    var name: String,
 
     /**
      * The profile name of the project
@@ -51,7 +51,7 @@ class ProjectModel(
     @field:Column(name = "profile_name", nullable = false, length = 60)
     @field:NotBlank
     @field:Size(min = 1, max = 60)
-    val profileName: String,
+    var profileName: String,
 
     /**
      * When the project was created

@@ -2,23 +2,30 @@ package io.felipepoliveira.fpmtoolkit.features.projects
 
 import io.felipepoliveira.fpmtoolkit.BaseService
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
+import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.dao.Pagination
 import io.felipepoliveira.fpmtoolkit.ext.addError
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberRoles
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
 import io.felipepoliveira.fpmtoolkit.features.projects.dto.CreateOrUpdateProjectDTO
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
+import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.SmartValidator
 import java.time.LocalDateTime
 import java.util.*
 
 @Service
 class ProjectService @Autowired constructor(
-    val projectDAO: ProjectDAO,
-    val organizationMemberService: OrganizationMemberService,
+    private val projectDAO: ProjectDAO,
+    private val organizationService: OrganizationService,
+    private val organizationMemberService: OrganizationMemberService,
     smartValidator: SmartValidator,
+    private val userService: UserService,
 ) : BaseService(smartValidator) {
 
     companion object {
@@ -28,12 +35,17 @@ class ProjectService @Autowired constructor(
     /**
      * Create a new project into the platform
      */
-    fun createProject(requester: UserModel, organization: OrganizationModel, dto: CreateOrUpdateProjectDTO): ProjectModel {
+    @Transactional
+    fun createProject(requesterUuid: String, organizationUuid: String, dto: CreateOrUpdateProjectDTO): ProjectModel {
         // check for validation errors
         val validationResult = validate(dto)
         if (validationResult.hasErrors()) {
             throw BusinessRuleException(validationResult)
         }
+
+        // Fetch request entities from database
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val organization = organizationService.findByUuid(organizationUuid)
 
         // check if requester can make the operation
         organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
@@ -61,7 +73,13 @@ class ProjectService @Autowired constructor(
         return project
     }
 
-    fun findByOwner(
+    /**
+     * Return all ProjectModel associated with the given organization and the requester authorization over it.
+     *
+     * If the requester is a PROJECT_ADMINISTRATOR it can view all projects of the organization, otherwise, it can
+     * only view the projects where it is a member
+     */
+    fun findByOrganization(
         requester: UserModel,
         organization: OrganizationModel,
         queryField: String? = null,
@@ -70,14 +88,114 @@ class ProjectService @Autowired constructor(
     ): Collection<ProjectModel> {
 
         // if the requester has PROJECT_MANAGER privileges it can fetch all projects on the organization
-
-        return projectDAO.findByOwner(
-            owner = organization,
-            page = page.coerceAtLeast(1),
-            itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
-            queryField = queryField
+        val requesterMembershipInOrg = organizationMemberService.findByOrganizationAndUserOrForbidden(
+            organization,
+            requester
         )
 
-        // otherwise it can only fetch projects where it is part on
+        // If the requester is a PROJECT_ADMINISTRATOR return all projects of the organization
+        if (requesterMembershipInOrg.isOwnerOrAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)) {
+            return projectDAO.findByOwner(
+                owner = organization,
+                page = page.coerceAtLeast(1),
+                itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
+                queryField = queryField
+            )
+        }
+        // otherwise, return only the projects where the requester is a member
+        else {
+            return projectDAO.findByOrganizationAndUserWithMembership(
+                owner = organization,
+                user = requester,
+                page = page.coerceAtLeast(1),
+                itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
+                queryField = queryField
+            )
+        }
+    }
+
+    /**
+     * Return pagination metadata of all ProjectModel associated with the given organization and the requester
+     * authorization over it.
+     *
+     * If the requester is a PROJECT_ADMINISTRATOR it can view all projects of the organization, otherwise, it can
+     * only view the projects where it is a member
+     */
+    fun paginationByOrganization(
+        requester: UserModel,
+        organization: OrganizationModel,
+        queryField: String? = null,
+        limit: Int = PAGINATION_LIMIT,
+    ): Pagination {
+        // if the requester has PROJECT_MANAGER privileges it can fetch all projects on the organization
+        val requesterMembershipInOrg = organizationMemberService.findByOrganizationAndUserOrForbidden(
+            organization,
+            requester
+        )
+
+        // If the requester is a PROJECT_ADMINISTRATOR return all projects of the organization
+        if (requesterMembershipInOrg.isOwnerOrAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)) {
+            return projectDAO.paginationByOwner(
+                owner = organization,
+                itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
+                queryField = queryField
+            )
+        }
+        // otherwise, return only the projects where the requester is a member
+        else {
+            return projectDAO.paginationByOrganizationAndUserWithMembership(
+                owner = organization,
+                user = requester,
+                itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
+                queryField = queryField
+            )
+        }
+    }
+
+    @Transactional
+    fun updateProject(
+        requesterUuid: String, organizationUuid: String, projectUuid: String, dto: CreateOrUpdateProjectDTO
+    ) : ProjectModel {
+
+        // check for validation errors
+        val validationResult = validate(dto)
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        // Fetch request entities from database
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val organization = organizationService.findByUuid(organizationUuid)
+
+        // check if requester can make the operation
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)
+
+        // check for duplicated project
+        if (projectDAO.findByOwnerAndProfileName(organization, dto.profileName) != null) {
+            validationResult.addError("profileName", "The 'profileName' '${dto.profileName}' can not be used")
+            throw BusinessRuleException(validationResult)
+        }
+
+        // fetch the target updated project
+        val updatedProject = projectDAO.findByUuid(projectUuid) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            reason = "Could not find project identified by uuid '$projectUuid'"
+        )
+
+        // assert that the target project is from the same organization
+        if (updatedProject.owner.id != organization.id) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "You can not update the target project"
+            )
+        }
+
+        // update the project in the database
+        updatedProject.name = dto.name
+        updatedProject.profileName = dto.profileName
+        projectDAO.update(updatedProject)
+
+        return updatedProject
     }
 }

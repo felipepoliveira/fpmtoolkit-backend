@@ -90,6 +90,7 @@ class OrganizationMemberModel(
      */
     fun isFromSameOrganization(another: OrganizationMemberModel) = this.organization.id == another.organization.id
 
+
     /**
      * Return a flag if this member is the owner of the organization or contains any of the given roles
      */
@@ -101,6 +102,14 @@ class OrganizationMemberModel(
 
         // return a flag if any of the given roles is contained in the organization member roles collection
         return roles.any { r -> this.roles.contains(r) }
+    }
+
+    /**
+     * Return a flag indicating if the member is owner, ORG_ADMINISTRATOR or has another given 'roles'
+     */
+    fun isOwnerOrAdministratorOr(vararg roles: OrganizationMemberRoles): Boolean {
+        val extendedRoles = roles.toList() + OrganizationMemberRoles.ORG_ADMINISTRATOR
+        return isOwnerOr(*extendedRoles.toTypedArray())
     }
 
 }

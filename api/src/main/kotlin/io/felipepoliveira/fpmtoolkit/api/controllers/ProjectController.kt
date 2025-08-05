@@ -1,0 +1,70 @@
+package io.felipepoliveira.fpmtoolkit.api.controllers
+
+import io.felipepoliveira.fpmtoolkit.api.security.auth.RequestClient
+import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationService
+import io.felipepoliveira.fpmtoolkit.features.projects.ProjectService
+import io.felipepoliveira.fpmtoolkit.features.projects.dto.CreateOrUpdateProjectDTO
+import io.felipepoliveira.fpmtoolkit.features.users.UserService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/api/organizations/{organizationUuid}/projects")
+class ProjectController @Autowired constructor(
+    private val organizationService: OrganizationService,
+    private val projectService: ProjectService,
+    private val userService: UserService,
+) : BaseRestController(){
+
+    /**
+     * Create a new project into the platform
+     */
+    @PostMapping
+    fun createProject(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable organizationUuid: String,
+        @RequestBody dto: CreateOrUpdateProjectDTO,
+    ) = ok {
+        projectService.createProject(requestClient.userIdentifier, organizationUuid, dto)
+    }
+
+    /**
+     * Find all projects of an organization
+     */
+    @GetMapping
+    fun findOrPaginationByOrganization(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable organizationUuid: String,
+        @RequestParam(required = false) limit: Int?,
+        @RequestParam(required = false) page: Int?,
+        @RequestParam(required = false) pagination: Boolean?,
+        @RequestParam(required = false) queryField: String?,
+    ) = ok {
+        if (pagination == true) {
+            projectService.paginationByOrganization(
+                requester = userService.assertFindByUuid(requestClient.userIdentifier),
+                organization = organizationService.findByUuid(organizationUuid),
+                queryField = queryField,
+                limit = limit ?: ProjectService.PAGINATION_LIMIT
+            )
+        }
+        else {
+            projectService.findByOrganization(
+                requester = userService.assertFindByUuid(requestClient.userIdentifier),
+                organization = organizationService.findByUuid(organizationUuid),
+                queryField = queryField,
+                page = page ?: 1,
+                limit = limit ?: ProjectService.PAGINATION_LIMIT
+            )
+        }
+
+
+    }
+}

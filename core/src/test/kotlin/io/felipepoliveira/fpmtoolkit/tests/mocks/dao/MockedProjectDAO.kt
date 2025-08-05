@@ -4,6 +4,7 @@ import io.felipepoliveira.fpmtoolkit.dao.Pagination
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectDAO
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectModel
+import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
@@ -29,6 +30,29 @@ class MockedProjectDAO @Autowired constructor(
         createdAt = LocalDateTime.now(),
         members = arrayListOf()
         )
+
+    override fun findByOrganizationAndUserWithMembership(
+        owner: OrganizationModel,
+        user: UserModel,
+        itemsPerPage: Int,
+        page: Int,
+        queryField: String?
+    ): Collection<ProjectModel> {
+        return mock(mockedDatabase.filter { m ->
+            m.reference.owner.id == owner.id && m.reference.members.any { member -> member.user.id == user.id }
+        })
+    }
+
+    override fun paginationByOrganizationAndUserWithMembership(
+        owner: OrganizationModel,
+        user: UserModel,
+        itemsPerPage: Int,
+        queryField: String?
+    ): Pagination {
+        return mockPagination(mockedDatabase.filter { m ->
+            m.reference.owner.id == owner.id &&  m.reference.members.any { member -> member.user.id == user.id }
+        })
+    }
 
     override fun findByOwner(
         owner: OrganizationModel,

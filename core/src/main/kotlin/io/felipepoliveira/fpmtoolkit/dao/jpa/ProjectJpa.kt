@@ -7,27 +7,69 @@ import io.felipepoliveira.fpmtoolkit.ext.fetchPagination
 import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectDAO
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectModel
+import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import jakarta.persistence.Query
 import org.springframework.stereotype.Repository
 
 @Repository
 class ProjectJpa : ProjectDAO, BaseJpa<Long, ProjectModel>() {
+
+    override fun findByOrganizationAndUserWithMembership(
+        owner: OrganizationModel,
+        user: UserModel,
+        itemsPerPage: Int,
+        page: Int,
+        queryField: String?
+    ): Collection<ProjectModel> {
+        return queryByOwnerAndUserWithMembership(owner, user, queryField).fetchAllPaginated(itemsPerPage, page)
+    }
+
+    override fun paginationByOrganizationAndUserWithMembership(
+        owner: OrganizationModel,
+        user: UserModel,
+        itemsPerPage: Int,
+        queryField: String?
+    ): Pagination {
+        return queryByOwnerAndUserWithMembership(owner, user, queryField).fetchPagination(itemsPerPage)
+    }
+
+    private fun queryByOwnerAndUserWithMembership(
+        owner: OrganizationModel,
+        user: UserModel,
+        queryField: String?
+    ): Query {
+        val queryCriteria = query("p")
+            .join("members", "m")
+            .where("p.owner.id = :ownerId")
+            .and("m.user.id = :userId")
+            .setParameter("ownerId", owner.id)
+            .setParameter("userId", user.id)
+
+        if (!queryField.isNullOrBlank()) {
+            queryCriteria.andStartQueryGroup("p.name LIKE :queryField")
+                .closeQueryGroup()
+                .setParameter("queryField", "$queryField%")
+        }
+
+
+        return queryCriteria.prepare()
+    }
+
     override fun findByOwner(
         owner: OrganizationModel,
         itemsPerPage: Int,
         page: Int,
         queryField: String?
     ): Collection<ProjectModel> {
-        return queryByOwner(owner, queryField).fetchAllPaginated(itemsPerPage, page)
+        return queryByOwner(query("p"), owner, queryField).fetchAllPaginated(itemsPerPage, page)
     }
 
     override fun paginationByOwner(owner: OrganizationModel, itemsPerPage: Int, queryField: String?): Pagination {
-        return queryByOwner(owner, queryField).fetchPagination(itemsPerPage)
+        return queryByOwner(paginatedQuery("p"), owner, queryField).fetchPagination(itemsPerPage)
     }
 
-    private fun queryByOwner(owner: OrganizationModel, queryField: String?): Query {
-        val queryCriteria = query("p")
-            .where("p.owner.id = :ownerId")
+    private fun queryByOwner(sourceQuery: HqlSmartQuery<ProjectModel>, owner: OrganizationModel, queryField: String?): Query {
+        val queryCriteria = sourceQuery.where("p.owner.id = :ownerId")
 
         // add query fields
         if (!queryField.isNullOrBlank()) {
