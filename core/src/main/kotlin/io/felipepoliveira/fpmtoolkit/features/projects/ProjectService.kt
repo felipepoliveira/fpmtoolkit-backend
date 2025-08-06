@@ -33,6 +33,38 @@ class ProjectService @Autowired constructor(
     }
 
     /**
+     * Archive a project in the database
+     */
+    @Transactional
+    fun archiveProject(requesterUuid: String, organizationUuid: String, projectUuid: String): ProjectModel {
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val organization = organizationService.findByUuid(organizationUuid)
+
+        // Assert that the requester has the required role
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)
+
+        // update the target project in the database
+        val projectToUpdate = projectDAO.findByOwnerAndUuid(organization, projectUuid) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            "Could not find project '$projectUuid' on organization $organizationUuid"
+        )
+
+        // If the project is already archived throw an error
+        if (projectToUpdate.archivedAt != null) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "Project is already archived"
+            )
+        }
+
+        projectToUpdate.archivedAt = LocalDateTime.now()
+        projectDAO.update(projectToUpdate)
+
+        return projectToUpdate
+    }
+
+    /**
      * Create a new project into the platform
      */
     @Transactional
@@ -66,7 +98,8 @@ class ProjectService @Autowired constructor(
             profileName = dto.profileName,
             owner = organization,
             shortDescription = "",
-            members = arrayListOf()
+            members = arrayListOf(),
+            archivedAt = null,
         )
         projectDAO.persist(project)
 
@@ -95,7 +128,7 @@ class ProjectService @Autowired constructor(
 
         // If the requester is a PROJECT_ADMINISTRATOR return all projects of the organization
         if (requesterMembershipInOrg.isOwnerOrAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)) {
-            return projectDAO.findByOwner(
+            return projectDAO.findByOwnerIgnoreArchived(
                 owner = organization,
                 page = page.coerceAtLeast(1),
                 itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
@@ -104,7 +137,7 @@ class ProjectService @Autowired constructor(
         }
         // otherwise, return only the projects where the requester is a member
         else {
-            return projectDAO.findByOrganizationAndUserWithMembership(
+            return projectDAO.findByOrganizationAndUserWithMembershipIgnoreArchived(
                 owner = organization,
                 user = requester,
                 page = page.coerceAtLeast(1),
@@ -135,7 +168,7 @@ class ProjectService @Autowired constructor(
 
         // If the requester is a PROJECT_ADMINISTRATOR return all projects of the organization
         if (requesterMembershipInOrg.isOwnerOrAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)) {
-            return projectDAO.paginationByOwner(
+            return projectDAO.paginationByOwnerIgnoreArchived(
                 owner = organization,
                 itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
                 queryField = queryField
@@ -143,7 +176,7 @@ class ProjectService @Autowired constructor(
         }
         // otherwise, return only the projects where the requester is a member
         else {
-            return projectDAO.paginationByOrganizationAndUserWithMembership(
+            return projectDAO.paginationByOrganizationAndUserWithMembershipIgnoreArchived(
                 owner = organization,
                 user = requester,
                 itemsPerPage = limit.coerceIn(1..PAGINATION_LIMIT),
@@ -178,18 +211,11 @@ class ProjectService @Autowired constructor(
         }
 
         // fetch the target updated project
-        val updatedProject = projectDAO.findByUuid(projectUuid) ?: throw BusinessRuleException(
+        val updatedProject = projectDAO.findByOwnerAndUuid(organization, projectUuid) ?: throw BusinessRuleException(
             BusinessRulesError.NOT_FOUND,
             reason = "Could not find project identified by uuid '$projectUuid'"
         )
 
-        // assert that the target project is from the same organization
-        if (updatedProject.owner.id != organization.id) {
-            throw BusinessRuleException(
-                BusinessRulesError.FORBIDDEN,
-                "You can not update the target project"
-            )
-        }
 
         // update the project in the database
         updatedProject.name = dto.name

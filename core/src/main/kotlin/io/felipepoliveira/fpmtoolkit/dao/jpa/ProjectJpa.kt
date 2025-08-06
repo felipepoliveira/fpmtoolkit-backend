@@ -14,26 +14,26 @@ import org.springframework.stereotype.Repository
 @Repository
 class ProjectJpa : ProjectDAO, BaseJpa<Long, ProjectModel>() {
 
-    override fun findByOrganizationAndUserWithMembership(
+    override fun findByOrganizationAndUserWithMembershipIgnoreArchived(
         owner: OrganizationModel,
         user: UserModel,
         itemsPerPage: Int,
         page: Int,
         queryField: String?
     ): Collection<ProjectModel> {
-        return queryByOwnerAndUserWithMembership(owner, user, queryField).fetchAllPaginated(itemsPerPage, page)
+        return queryByOwnerAndUserWithMembershipIgnoreArchived(owner, user, queryField).fetchAllPaginated(itemsPerPage, page)
     }
 
-    override fun paginationByOrganizationAndUserWithMembership(
+    override fun paginationByOrganizationAndUserWithMembershipIgnoreArchived(
         owner: OrganizationModel,
         user: UserModel,
         itemsPerPage: Int,
         queryField: String?
     ): Pagination {
-        return queryByOwnerAndUserWithMembership(owner, user, queryField).fetchPagination(itemsPerPage)
+        return queryByOwnerAndUserWithMembershipIgnoreArchived(owner, user, queryField).fetchPagination(itemsPerPage)
     }
 
-    private fun queryByOwnerAndUserWithMembership(
+    private fun queryByOwnerAndUserWithMembershipIgnoreArchived(
         owner: OrganizationModel,
         user: UserModel,
         queryField: String?
@@ -42,6 +42,7 @@ class ProjectJpa : ProjectDAO, BaseJpa<Long, ProjectModel>() {
             .join("members", "m")
             .where("p.owner.id = :ownerId")
             .and("m.user.id = :userId")
+            .and("p.archivedAt IS NULL")
             .setParameter("ownerId", owner.id)
             .setParameter("userId", user.id)
 
@@ -55,21 +56,22 @@ class ProjectJpa : ProjectDAO, BaseJpa<Long, ProjectModel>() {
         return queryCriteria.prepare()
     }
 
-    override fun findByOwner(
+    override fun findByOwnerIgnoreArchived(
         owner: OrganizationModel,
         itemsPerPage: Int,
         page: Int,
         queryField: String?
     ): Collection<ProjectModel> {
-        return queryByOwner(query("p"), owner, queryField).fetchAllPaginated(itemsPerPage, page)
+        return queryByOwnerIgnoreArchived(query("p"), owner, queryField).fetchAllPaginated(itemsPerPage, page)
     }
 
-    override fun paginationByOwner(owner: OrganizationModel, itemsPerPage: Int, queryField: String?): Pagination {
-        return queryByOwner(paginatedQuery("p"), owner, queryField).fetchPagination(itemsPerPage)
+    override fun paginationByOwnerIgnoreArchived(owner: OrganizationModel, itemsPerPage: Int, queryField: String?): Pagination {
+        return queryByOwnerIgnoreArchived(paginatedQuery("p"), owner, queryField).fetchPagination(itemsPerPage)
     }
 
-    private fun queryByOwner(sourceQuery: HqlSmartQuery<ProjectModel>, owner: OrganizationModel, queryField: String?): Query {
+    private fun queryByOwnerIgnoreArchived(sourceQuery: HqlSmartQuery<ProjectModel>, owner: OrganizationModel, queryField: String?): Query {
         val queryCriteria = sourceQuery.where("p.owner.id = :ownerId")
+            .and("p.archivedAt IS NULL")
 
         // add query fields
         if (!queryField.isNullOrBlank()) {
@@ -90,6 +92,16 @@ class ProjectJpa : ProjectDAO, BaseJpa<Long, ProjectModel>() {
             .and("p.profileName = :profileName")
             .setParameter("ownerId", owner.id)
             .setParameter("profileName", profileName)
+            .prepare()
+            .fetchFirst()
+    }
+
+    override fun findByOwnerAndUuid(owner: OrganizationModel, uuid: String): ProjectModel? {
+        return query("p")
+            .where("p.owner.id = :ownerId")
+            .and("p.uuid = :uuid")
+            .setParameter("ownerId", owner.id)
+            .setParameter("uuid", uuid)
             .prepare()
             .fetchFirst()
     }

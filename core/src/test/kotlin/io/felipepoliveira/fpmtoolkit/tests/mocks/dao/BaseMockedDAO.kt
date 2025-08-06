@@ -2,6 +2,7 @@ package io.felipepoliveira.fpmtoolkit.tests.mocks.dao
 
 import io.felipepoliveira.fpmtoolkit.dao.DAO
 import io.felipepoliveira.fpmtoolkit.dao.Pagination
+import kotlin.math.ceil
 
 abstract class BaseMockedDAO<IDType, ModelType> : DAO<IDType, ModelType> {
 
@@ -26,7 +27,8 @@ abstract class BaseMockedDAO<IDType, ModelType> : DAO<IDType, ModelType> {
         return Pagination(
             itemsPerPage,
             totalRecords = mockedObjects.size.toLong(),
-            currentPage = currentPage
+            currentPage = currentPage,
+            totalPages = ceil(mockedObjects.size.toFloat() / itemsPerPage).toInt()
         )
     }
 

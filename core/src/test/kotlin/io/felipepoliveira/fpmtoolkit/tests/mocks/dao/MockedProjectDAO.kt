@@ -18,6 +18,7 @@ class MockedProjectDAO @Autowired constructor(
 
     init {
         mockedDatabase.add(MockedObject { project1OwnerByOrganization1() })
+        mockedDatabase.add(MockedObject { project2NotOwnedByOrganization1() })
     }
 
     fun project1OwnerByOrganization1() = ProjectModel(
@@ -28,10 +29,23 @@ class MockedProjectDAO @Autowired constructor(
         id = 1,
         profileName = "project-1",
         createdAt = LocalDateTime.now(),
-        members = arrayListOf()
+        members = arrayListOf(),
+        archivedAt = null,
         )
 
-    override fun findByOrganizationAndUserWithMembership(
+    fun project2NotOwnedByOrganization1() = ProjectModel(
+        owner = mockedOrganizationDAO.notOrganization1(),
+        uuid = "2",
+        name = "Project 1 | Organization 1",
+        shortDescription = "",
+        id = 1,
+        profileName = "project-1",
+        createdAt = LocalDateTime.now(),
+        members = arrayListOf(),
+        archivedAt = null,
+    )
+
+    override fun findByOrganizationAndUserWithMembershipIgnoreArchived(
         owner: OrganizationModel,
         user: UserModel,
         itemsPerPage: Int,
@@ -43,7 +57,7 @@ class MockedProjectDAO @Autowired constructor(
         })
     }
 
-    override fun paginationByOrganizationAndUserWithMembership(
+    override fun paginationByOrganizationAndUserWithMembershipIgnoreArchived(
         owner: OrganizationModel,
         user: UserModel,
         itemsPerPage: Int,
@@ -54,7 +68,7 @@ class MockedProjectDAO @Autowired constructor(
         })
     }
 
-    override fun findByOwner(
+    override fun findByOwnerIgnoreArchived(
         owner: OrganizationModel,
         itemsPerPage: Int,
         page: Int,
@@ -63,7 +77,7 @@ class MockedProjectDAO @Autowired constructor(
         return mock(mockedDatabase.filter { m -> m.reference.owner.id == owner.id })
     }
 
-    override fun paginationByOwner(owner: OrganizationModel, itemsPerPage: Int, queryField: String?): Pagination {
+    override fun paginationByOwnerIgnoreArchived(owner: OrganizationModel, itemsPerPage: Int, queryField: String?): Pagination {
         return mockPagination(mockedDatabase.filter { m -> m.reference.owner.id == owner.id })
     }
 
@@ -71,8 +85,12 @@ class MockedProjectDAO @Autowired constructor(
         return mock(mockedDatabase.find { m -> m.reference.owner.id == owner.id && m.reference.profileName == profileName })
     }
 
+    override fun findByOwnerAndUuid(owner: OrganizationModel, uuid: String): ProjectModel? {
+        return mock(mockedDatabase.find { m -> m.reference.owner.id == owner.id && m.reference.uuid == uuid })
+    }
+
     override fun findByUuid(uuid: String): ProjectModel? {
-        return mock(mockedDatabase.find { m -> m.reference.owner.uuid == uuid })
+        return mock(mockedDatabase.find { m -> m.reference.uuid == uuid })
     }
 
     override fun findById(id: Long): ProjectModel? {

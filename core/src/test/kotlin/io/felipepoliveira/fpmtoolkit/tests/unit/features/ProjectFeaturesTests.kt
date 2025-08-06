@@ -19,6 +19,46 @@ import org.springframework.test.context.ContextConfiguration
 
 @SpringBootTest
 @ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class ArchiveProjectTests @Autowired constructor(
+    private val mockedOrganizationDAO: MockedOrganizationDAO,
+    private val mockedOrganizationMemberDAO: MockedOrganizationMemberDAO,
+    private val mockedProjectDAO: MockedProjectDAO,
+    private val mockedUserDAO: MockedUserDAO,
+    private val projectService: ProjectService,
+) : FunSpec({
+
+    test("Assert that it is possible to archive") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+
+        // act
+        val updatedProject = projectService.archiveProject(requester.uuid, organization.uuid, targetProject.uuid)
+
+        // assert
+        updatedProject.archivedAt.shouldNotBeNull()
+    }
+
+    test("Assert than an error is triggered when the requester does not have authorization") {
+        // arrange
+        val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.archiveProject(requester.uuid, organization.uuid, targetProject.uuid)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
 class CreateProjectTests @Autowired constructor(
     private val mockedOrganizationDAO: MockedOrganizationDAO,
     private val mockedOrganizationMemberDAO: MockedOrganizationMemberDAO,
@@ -37,7 +77,7 @@ class CreateProjectTests @Autowired constructor(
         )
 
         // act
-        val createdProject = projectService.createProject(requester, organization, dto)
+        val createdProject = projectService.createProject(requester.uuid, organization.uuid, dto)
 
         // assert
         createdProject.profileName shouldBe dto.profileName
@@ -58,7 +98,7 @@ class CreateProjectTests @Autowired constructor(
 
         // act
         val exception = shouldThrow<BusinessRuleException> {
-            projectService.createProject(requester, organization, dto)
+            projectService.createProject(requester.uuid, organization.uuid, dto)
         }
 
         // assert
@@ -78,7 +118,7 @@ class CreateProjectTests @Autowired constructor(
 
         // act
         val exception = shouldThrow<BusinessRuleException> {
-            projectService.createProject(requester, organization, dto)
+            projectService.createProject(requester.uuid, organization.uuid, dto)
         }
 
         // assert
@@ -96,7 +136,7 @@ class CreateProjectTests @Autowired constructor(
 
         // act
         val exception = shouldThrow<BusinessRuleException> {
-            projectService.createProject(requester, organization, dto)
+            projectService.createProject(requester.uuid, organization.uuid, dto)
         }
 
         // assert
@@ -110,8 +150,6 @@ class CreateProjectTests @Autowired constructor(
 @ContextConfiguration(classes = [UnitTestsConfiguration::class])
 class FindByOwnerTests @Autowired constructor(
     private val mockedOrganizationDAO: MockedOrganizationDAO,
-    private val mockedOrganizationMemberDAO: MockedOrganizationMemberDAO,
-    private val mockedProjectDAO: MockedProjectDAO,
     private val mockedUserDAO: MockedUserDAO,
     private val projectService: ProjectService,
 ) : FunSpec({
@@ -137,5 +175,129 @@ class FindByOwnerTests @Autowired constructor(
 
         // assert
         projects.size shouldBe 0
+    }
+})
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class UpdateProjectTests @Autowired constructor(
+    private val mockedOrganizationDAO: MockedOrganizationDAO,
+    private val mockedProjectDAO: MockedProjectDAO,
+    private val mockedUserDAO: MockedUserDAO,
+    private val projectService: ProjectService,
+) : FunSpec({
+
+    test("Assert that project is updated") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+        val dto = CreateOrUpdateProjectDTO(
+            name = "Updated name",
+            profileName = "updated-name"
+        )
+
+        // act
+        val updatedProject = projectService.updateProject(requester.uuid, organization.uuid, targetProject.uuid, dto)
+
+        // assert
+        updatedProject.name shouldBe dto.name
+        updatedProject.profileName shouldBe dto.profileName
+    }
+
+    test("Assert that fails on data validation errors") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+        val dto = CreateOrUpdateProjectDTO(
+            name = "",
+            profileName = ""
+        )
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.updateProject(requester.uuid, organization.uuid, targetProject.uuid, dto)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.VALIDATION
+        val details = exception.details.shouldNotBeNull()
+        details.shouldContainKeys("name", "profileName")
+    }
+
+    test("Assert that fails when requester is from another organization") {
+        // arrange
+        val requester = mockedUserDAO.user2()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+        val dto = CreateOrUpdateProjectDTO(
+            name = "Updated name",
+            profileName = "updated-name"
+        )
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.updateProject(requester.uuid, organization.uuid, targetProject.uuid, dto)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that fails when requester is from same organization but with no required role") {
+        // arrange
+        val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+        val dto = CreateOrUpdateProjectDTO(
+            name = "Updated name",
+            profileName = "updated-name"
+        )
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.updateProject(requester.uuid, organization.uuid, targetProject.uuid, dto)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that throws an error when project uuid is not found") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val dto = CreateOrUpdateProjectDTO(
+            name = "Updated name",
+            profileName = "updated-name"
+        )
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.updateProject(requester.uuid, organization.uuid, "INVALID_PROJECT_UUID", dto)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.NOT_FOUND
+    }
+
+    test("Assert that an error occur when the target project is not from the requester organization") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project2NotOwnedByOrganization1()
+        val dto = CreateOrUpdateProjectDTO(
+            name = "Updated name",
+            profileName = "updated-name"
+        )
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.updateProject(requester.uuid, organization.uuid, targetProject.uuid, dto)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.NOT_FOUND
     }
 })

@@ -21,6 +21,7 @@ class MockedOrganizationDAO @Autowired constructor(
 
     init {
         mockedDatabase.add(MockedObject { organization1OwnedByUser1() })
+        mockedDatabase.add(MockedObject { notOrganization1() })
         mockedDatabase.addAll(organizationsOfUserWithALotOfOrganizations().map { o -> MockedObject { o } })
     }
 
@@ -50,6 +51,15 @@ class MockedOrganizationDAO @Autowired constructor(
 
         return org
     }
+
+    fun notOrganization1() = OrganizationModel(
+        profileName = "not-org1",
+        uuid = "not-org1",
+        presentationName = "Not Organization",
+        id = 999,
+        createdAt = LocalDateTime.now(),
+        members = mutableListOf()
+    )
 
     final fun organizationsOfUserWithALotOfOrganizations(): List<OrganizationModel> {
         val orgs = mutableListOf<OrganizationModel>()
