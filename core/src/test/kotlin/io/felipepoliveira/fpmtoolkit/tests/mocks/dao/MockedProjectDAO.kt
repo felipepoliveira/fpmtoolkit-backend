@@ -19,6 +19,7 @@ class MockedProjectDAO @Autowired constructor(
     init {
         mockedDatabase.add(MockedObject { project1OwnerByOrganization1() })
         mockedDatabase.add(MockedObject { project2NotOwnedByOrganization1() })
+        mockedDatabase.add(MockedObject { project3ArchivedOwnedByOrganization1() })
     }
 
     fun project1OwnerByOrganization1() = ProjectModel(
@@ -43,6 +44,18 @@ class MockedProjectDAO @Autowired constructor(
         createdAt = LocalDateTime.now(),
         members = arrayListOf(),
         archivedAt = null,
+    )
+
+    fun project3ArchivedOwnedByOrganization1() = ProjectModel(
+        archivedAt = LocalDateTime.now(),
+        name = "Project 3",
+        profileName = "project-3",
+        shortDescription = "Project 3",
+        members = arrayListOf(),
+        id = 3,
+        uuid = "3",
+        owner = mockedOrganizationDAO.organization1OwnedByUser1(),
+        createdAt = LocalDateTime.now()
     )
 
     override fun findByOrganizationAndUserWithMembershipIgnoreArchived(

@@ -7,9 +7,11 @@ import io.felipepoliveira.fpmtoolkit.features.projects.dto.CreateOrUpdateProject
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -23,6 +25,20 @@ class ProjectController @Autowired constructor(
     private val userService: UserService,
 ) : BaseRestController(){
 
+    @DeleteMapping("/{projectUuid}")
+    fun archiveProject(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable(name = "organizationUuid") organizationUuid: String,
+        @PathVariable(name = "projectUuid") projectUuid: String
+    ) = ok {
+        projectService.archiveProject(
+            requesterUuid = requestClient.userIdentifier,
+            organizationUuid = organizationUuid,
+            projectUuid = projectUuid,
+        )
+    }
+
+
     /**
      * Create a new project into the platform
      */
@@ -35,11 +51,24 @@ class ProjectController @Autowired constructor(
         projectService.createProject(requestClient.userIdentifier, organizationUuid, dto)
     }
 
+    @GetMapping("/find-by-profile-name/{profileName}")
+    fun findByProfileName(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable(name = "organizationUuid") organizationUuid: String,
+        @PathVariable profileName: String
+    ) = ok {
+        projectService.findByProfileNameAndOrganization(
+            userService.assertFindByUuid(requestClient.userIdentifier),
+            organizationService.findByUuid(organizationUuid),
+            profileName
+        )
+    }
+
     /**
      * Find all projects of an organization
      */
     @GetMapping
-    fun findOrPaginationByOrganization(
+    fun findDataOrPaginationByOrganization(
         @AuthenticationPrincipal requestClient: RequestClient,
         @PathVariable organizationUuid: String,
         @RequestParam(required = false) limit: Int?,
@@ -64,7 +93,39 @@ class ProjectController @Autowired constructor(
                 limit = limit ?: ProjectService.PAGINATION_LIMIT
             )
         }
+    }
 
+    /**
+     * Restore project from archive
+     */
+    @PutMapping("/{projectUuid}/restore")
+    fun restoreArchivedProject(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable(name = "organizationUuid") organizationUuid: String,
+        @PathVariable(name = "projectUuid") projectUuid: String
+    ) = ok {
+        projectService.restoreArchivedProject(
+            requesterUuid = requestClient.userIdentifier,
+            organizationUuid = organizationUuid,
+            projectUuid = projectUuid,
+        )
+    }
 
+    /**
+     * Update a project in the database
+     */
+    @PutMapping("/{projectUuid}")
+    fun updateProject(
+        @AuthenticationPrincipal requestClient: RequestClient,
+        @PathVariable(name = "organizationUuid") organizationUuid: String,
+        @PathVariable(name = "projectUuid") projectUuid: String,
+        @RequestBody dto: CreateOrUpdateProjectDTO
+    ) = ok {
+        projectService.updateProject(
+            requesterUuid = requestClient.userIdentifier,
+            projectUuid = projectUuid,
+            organizationUuid = organizationUuid,
+            dto = dto
+        )
     }
 }

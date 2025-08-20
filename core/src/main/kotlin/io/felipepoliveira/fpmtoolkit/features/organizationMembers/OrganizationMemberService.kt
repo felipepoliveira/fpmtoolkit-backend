@@ -145,6 +145,13 @@ class OrganizationMemberService @Autowired constructor(
         )
     }
 
+    fun findByOrganizationAndUser(organization: OrganizationModel, user: UserModel): OrganizationMemberModel {
+        return organizationMemberDAO.findByOrganizationAndUser(organization, user) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            "Could not found membership of user ${user.uuid} in organization ${organization.profileName}"
+        )
+    }
+
     /**
      * Find an organization member identified by the given organization and the user account associated
      * with the OrganizationMemberModel

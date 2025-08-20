@@ -21,7 +21,6 @@ import org.springframework.test.context.ContextConfiguration
 @ContextConfiguration(classes = [UnitTestsConfiguration::class])
 class ArchiveProjectTests @Autowired constructor(
     private val mockedOrganizationDAO: MockedOrganizationDAO,
-    private val mockedOrganizationMemberDAO: MockedOrganizationMemberDAO,
     private val mockedProjectDAO: MockedProjectDAO,
     private val mockedUserDAO: MockedUserDAO,
     private val projectService: ProjectService,
@@ -45,6 +44,36 @@ class ArchiveProjectTests @Autowired constructor(
         val requester = mockedUserDAO.user11OfOrg1WithNoRoles()
         val organization = mockedOrganizationDAO.organization1OwnedByUser1()
         val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.archiveProject(requester.uuid, organization.uuid, targetProject.uuid)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that an error is thrown an trying to archive a project of another organization") {
+        // arrange
+        val requester = mockedUserDAO.user2()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project1OwnerByOrganization1()
+
+        // act
+        val exception = shouldThrow<BusinessRuleException> {
+            projectService.archiveProject(requester.uuid, organization.uuid, targetProject.uuid)
+        }
+
+        // assert
+        exception.error shouldBe BusinessRulesError.FORBIDDEN
+    }
+
+    test("Assert that an error is thrown when trying to archive a project that is already archived") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val organization = mockedOrganizationDAO.organization1OwnedByUser1()
+        val targetProject = mockedProjectDAO.project3ArchivedOwnedByOrganization1()
 
         // act
         val exception = shouldThrow<BusinessRuleException> {

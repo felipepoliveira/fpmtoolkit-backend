@@ -185,6 +185,53 @@ class ProjectService @Autowired constructor(
         }
     }
 
+    fun findByProfileNameAndOrganization(
+        requester: UserModel,
+        organization: OrganizationModel,
+        profileName: String
+    ): ProjectModel {
+        // check if the requester is a member of the organization
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+
+        // return the project if found
+        return projectDAO.findByOwnerAndProfileName(organization, profileName) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            "Project $profileName was not found in organization ${organization.profileName}"
+        )
+    }
+
+    /**
+     * Archive a project in the database
+     */
+    @Transactional
+    fun restoreArchivedProject(requesterUuid: String, organizationUuid: String, projectUuid: String): ProjectModel {
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val organization = organizationService.findByUuid(organizationUuid)
+
+        // Assert that the requester has the required role
+        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)
+
+        // update the target project in the database
+        val projectToUpdate = projectDAO.findByOwnerAndUuid(organization, projectUuid) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            "Could not find project '$projectUuid' on organization $organizationUuid"
+        )
+
+        // If the project is already archived throw an error
+        if (projectToUpdate.archivedAt == null) {
+            throw BusinessRuleException(
+                BusinessRulesError.FORBIDDEN,
+                "Project is not archived"
+            )
+        }
+
+        projectToUpdate.archivedAt = null
+        projectDAO.update(projectToUpdate)
+
+        return projectToUpdate
+    }
+
     @Transactional
     fun updateProject(
         requesterUuid: String, organizationUuid: String, projectUuid: String, dto: CreateOrUpdateProjectDTO
