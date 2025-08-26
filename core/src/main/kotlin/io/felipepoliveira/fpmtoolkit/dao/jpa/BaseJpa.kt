@@ -72,10 +72,10 @@ class HqlSmartQuery<ModelType>(private val entityManager: EntityManager, modelTy
     }
 
     /**
-     * Change the default `SELECT $typeAlias` part of the HQL to `SELECT $fromHql` given by this method
+     * Change the default `SELECT $typeAlias` part of the HQL to `SELECT fieldsHql` given by this method
      */
-    fun select(fromHql: String): HqlSmartQuery<ModelType> {
-        hqlFromPart = "SELECT $fromHql"
+    fun select(fieldsHql: String): HqlSmartQuery<ModelType> {
+        hqlFromPart = "SELECT $fieldsHql"
         return this
     }
 

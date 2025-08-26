@@ -148,6 +148,14 @@ class ProjectService @Autowired constructor(
     }
 
     /**
+     * Find a project identified by the given UUID. If the project is not found throw BusinessRuleException(NOT_FOUND)
+     */
+    fun findByUuid(projectUuid: String) = projectDAO.findByUuid(projectUuid) ?: throw BusinessRuleException(
+        BusinessRulesError.NOT_FOUND,
+        "Could not find project identified by '$projectUuid'"
+    )
+
+    /**
      * Return pagination metadata of all ProjectModel associated with the given organization and the requester
      * authorization over it.
      *

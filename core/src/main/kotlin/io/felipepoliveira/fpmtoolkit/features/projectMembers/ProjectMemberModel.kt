@@ -31,7 +31,7 @@ class ProjectMemberModel(
     /**
      * The project associated with the member
      */
-    @field:ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    @field:ManyToOne(fetch = FetchType.LAZY)
     @field:JoinColumn(name = "project_id", nullable = false)
     @field:JsonIgnore
     val project: ProjectModel,

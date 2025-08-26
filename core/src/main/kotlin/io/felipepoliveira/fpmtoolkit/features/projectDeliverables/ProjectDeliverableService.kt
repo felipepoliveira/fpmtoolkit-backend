@@ -10,17 +10,23 @@ import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
 import io.felipepoliveira.fpmtoolkit.features.projectDeliverables.dao.CreateOrUpdateProjectDeliverableDTO
 import io.felipepoliveira.fpmtoolkit.features.projectMembers.ProjectMemberService
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectModel
+import io.felipepoliveira.fpmtoolkit.features.projects.ProjectService
 import io.felipepoliveira.fpmtoolkit.features.users.UserModel
+import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.validation.BindingResult
 import org.springframework.validation.SmartValidator
 import java.util.*
 
+@Service
 class ProjectDeliverableService @Autowired constructor (
     private val organizationMemberService: OrganizationMemberService,
     private val projectDeliverableDAO: ProjectDeliverableDAO,
+    private val projectService: ProjectService,
     private val projectMemberService: ProjectMemberService,
+    private val userService: UserService,
     smartValidator: SmartValidator
 ) : BaseService(smartValidator) {
 
@@ -49,36 +55,10 @@ class ProjectDeliverableService @Autowired constructor (
         return validationResult
     }
 
-    fun findByUuid(
-        project: ProjectModel,
-        uuids: Collection<String>
-    ): Collection<ProjectDeliverableModel> {
-
-        val deliverables = projectDeliverableDAO.findByProjectAndUuid(project, uuids)
-
-        // Create a set of found UUIDs for fast lookup
-        val foundUuids = deliverables.map { it.uuid }.toSet()
-
-        // Filter out the ones that were not found
-        val notFoundUuids =  uuids.filterNot { it in foundUuids }
-
-        if (notFoundUuids.isNotEmpty()) {
-            throw BusinessRuleException(
-                BusinessRulesError.NOT_FOUND,
-                "Could not find deliverables identified by ${notFoundUuids.joinToString(
-                    ", ", "[", "]"
-                )}"
-            )
-        }
-
-        return deliverables
-    }
-
     @Transactional
-    fun createDeliverable(
-        requester: UserModel,
-        organization: OrganizationModel,
-        project: ProjectModel,
+    internal fun createDeliverable(
+        requesterUuid: String,
+        projectUuid: String,
         dto: CreateOrUpdateProjectDeliverableDTO,
     ): ProjectDeliverableModel {
         // validate DTO
@@ -87,8 +67,11 @@ class ProjectDeliverableService @Autowired constructor (
             throw BusinessRuleException(validationResult)
         }
 
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val project = projectService.findByUuid(projectUuid)
+
         // check membership authorization
-        organizationMemberService.findByOrganizationAndUserOrForbidden(organization, requester)
+        organizationMemberService.findByOrganizationAndUserOrForbidden(project.owner, requester)
             .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)
 
         // check if there is no duplicated name
@@ -112,11 +95,40 @@ class ProjectDeliverableService @Autowired constructor (
             factualEndDate = dto.factualEndDate,
             predecessors = findByUuid(project, dto.predecessors),
             expectedEndDate = dto.expectedEndDate,
-            responsible = projectMemberService.findByUuid(project, dto.responsible)
+            responsible = projectMemberService.findByProjectAndUuid(project, dto.responsible)
         )
 
         projectDeliverableDAO.persist(deliverable)
 
         return deliverable
+    }
+
+    /**
+     * Find all deliverables identified by the given UUID and project. If any of the given UUID is not found
+     * an BusinessRuleException(NOT_FOUND) will be thrown
+     */
+    fun findByUuid(
+        project: ProjectModel,
+        uuids: Collection<String>
+    ): Collection<ProjectDeliverableModel> {
+
+        val deliverables = projectDeliverableDAO.findByProjectAndUuid(project, uuids)
+
+        // Create a set of found UUIDs for fast lookup
+        val foundUuids = deliverables.map { it.uuid }.toSet()
+
+        // Filter out the ones that were not found
+        val notFoundUuids =  uuids.filterNot { it in foundUuids }
+
+        if (notFoundUuids.isNotEmpty()) {
+            throw BusinessRuleException(
+                BusinessRulesError.NOT_FOUND,
+                "Could not find deliverables identified by ${notFoundUuids.joinToString(
+                    ", ", "[", "]"
+                )}"
+            )
+        }
+
+        return deliverables
     }
 }

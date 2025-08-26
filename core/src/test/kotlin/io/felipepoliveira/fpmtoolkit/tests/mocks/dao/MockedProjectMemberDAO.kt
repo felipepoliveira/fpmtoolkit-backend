@@ -45,17 +45,18 @@ class MockedProjectMemberDAO @Autowired constructor(
         project: ProjectModel,
         page: Int,
         limit: Int,
-        queryField: String
+        queryField: String?
     ): Collection<ProjectMemberModel> {
-        return mock(mockedDatabase.filter { m -> m.reference.project.uuid == project.uuid })
+        return mock(mockedDatabase.filter { m -> m.reference.project.id == project.id })
     }
+
+    override fun paginationByProject(project: ProjectModel, limit: Int, queryField: String?): Pagination {
+        return mockPagination(mockedDatabase.filter { m -> m.reference.project.id == project.id })
+    }
+
 
     override fun findByProjectAndUser(project: ProjectModel, user: UserModel): ProjectMemberModel? {
         return mock(mockedDatabase.find { m -> m.reference.project.id == project.id && m.reference.user.id == user.id })
-    }
-
-    override fun paginationByProject(project: ProjectModel, limit: Int, queryField: String): Pagination {
-        return mockPagination(mockedDatabase.filter { m -> m.reference.project.uuid == project.uuid })
     }
 
     override fun findByProjectAndUuid(
@@ -63,7 +64,7 @@ class MockedProjectMemberDAO @Autowired constructor(
         uuids: Collection<String>
     ): Collection<ProjectMemberModel> {
         return mock(mockedDatabase.filter { m ->
-            m.reference.project.uuid == project.uuid &&
+            m.reference.project.id == project.id &&
             uuids.contains(m.reference.uuid)
         })
     }
