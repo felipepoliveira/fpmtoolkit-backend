@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.Duration
 import java.time.LocalDate
+import java.time.Period
 
 @Entity
 @Table(name = "project_deliverable", indexes = [
@@ -109,23 +110,23 @@ class ProjectDeliverableModel(
     /**
      * Calculate how long the expected execution of this deliverable will endure
      */
-    val expectedDuration: Duration?
+    val expectedDuration: Period?
         get() {
             if (expectedStartDate == null || expectedEndDate == null) {
                 return null
             }
-            return Duration.between(expectedStartDate, expectedEndDate)
+            return Period.between(expectedStartDate, expectedEndDate)
         }
 
     /**
      * Calculate how long the factual duration of this deliverable will endure
      */
-    val factualDuration: Duration?
+    val factualDuration: Period?
         get() {
             if (factualStartDate == null || factualEndDate == null) {
                 return null
             }
-            return Duration.between(factualStartDate, factualEndDate)
+            return Period.between(factualStartDate, factualEndDate)
         }
 }
 

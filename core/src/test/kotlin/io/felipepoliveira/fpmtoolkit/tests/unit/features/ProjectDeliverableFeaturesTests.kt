@@ -27,6 +27,7 @@ class CreateDeliverableTests @Autowired constructor(
     private val mockedUserDAO: MockedUserDAO,
     private val projectDeliverableService: ProjectDeliverableService,
 ) : FunSpec({
+
     test("Assert that the owner of the organization can add a deliverable into a project") {
         // Arrange
         val requester = mockedUserDAO.user1()
