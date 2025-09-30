@@ -164,3 +164,46 @@ class CreateDeliverableTests @Autowired constructor(
         exception.error shouldBe BusinessRulesError.NOT_FOUND
     }
 })
+
+@SpringBootTest
+@ContextConfiguration(classes = [UnitTestsConfiguration::class])
+class UpdateDeliverableTests @Autowired constructor(
+    private val mockedProjectDAO: MockedProjectDAO,
+    private val mockedProjectDeliverableDAO: MockedProjectDeliverableDAO,
+    private val mockedProjectMemberDAO: MockedProjectMemberDAO,
+    private val mockedUserDAO: MockedUserDAO,
+    private val projectDeliverableService: ProjectDeliverableService,
+) : FunSpec({
+
+    test("Assert that deliverable are updated") {
+        // arrange
+        val requester = mockedUserDAO.user1()
+        val targetDeliverable = mockedProjectDeliverableDAO.deliverable1FromProject1()
+        val dto = CreateOrUpdateProjectDeliverableDTO(
+            name = "Updated Deliverable",
+            factualStartDate = LocalDate.now(),
+            factualEndDate = LocalDate.now().plus(1, ChronoUnit.DAYS),
+            responsible = listOf(),
+            predecessors = listOf(),
+            expectedStartDate = null,
+            expectedEndDate = null,
+        )
+
+        // act
+        val updatedDeliverable = projectDeliverableService.updateDeliverable(
+            requester.uuid,
+            targetDeliverable.uuid,
+            dto
+        )
+
+        // assert
+        updatedDeliverable.name shouldBe dto.name
+        updatedDeliverable.factualStartDate shouldBe dto.factualStartDate
+        updatedDeliverable.factualEndDate shouldBe dto.factualEndDate
+        updatedDeliverable.responsible.map { r -> r.uuid } shouldBe dto.responsible // same uuids
+        updatedDeliverable.predecessors.map { p -> p.uuid } shouldBe dto.predecessors
+        updatedDeliverable.expectedStartDate shouldBe dto.expectedStartDate
+        updatedDeliverable.expectedEndDate shouldBe dto.expectedEndDate
+
+    }
+})

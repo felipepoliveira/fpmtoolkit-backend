@@ -7,7 +7,6 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.time.Duration
 import java.time.Instant
-import java.util.UUID
 
 /**
  * Parse the given Array<String> into a MutableCollection<GrantedAuthority> where each given role is added

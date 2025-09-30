@@ -1,5 +1,6 @@
 package io.felipepoliveira.fpmtoolkit.tests.mocks.dao
 
+import io.felipepoliveira.fpmtoolkit.dao.Pagination
 import io.felipepoliveira.fpmtoolkit.features.projectDeliverables.ProjectDeliverableDAO
 import io.felipepoliveira.fpmtoolkit.features.projectDeliverables.ProjectDeliverableModel
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectModel
@@ -34,6 +35,19 @@ class MockedProjectDeliverableDAO @Autowired constructor(
         return mock(mockedDatabase.find { m -> m.reference.name == name && m.reference.project.id == project.id })
     }
 
+    override fun findByProject(
+        project: ProjectModel,
+        limit: Int,
+        page: Int,
+        query: String?
+    ): Collection<ProjectDeliverableModel> {
+        return mock(mockedDatabase.filter { m -> m.reference.project.id == project.id })
+    }
+
+    override fun paginationByProject(project: ProjectModel, limit: Int, query: String?): Pagination {
+        return mockPagination(mockedDatabase.filter { m -> m.reference.project.id == project.id })
+    }
+
     override fun findByProjectAndUuid(
         project: ProjectModel,
         uuids: Collection<String>
@@ -41,6 +55,10 @@ class MockedProjectDeliverableDAO @Autowired constructor(
         return mock(mockedDatabase.filter { m ->
             m.reference.project.id == project.id && uuids.contains(m.reference.uuid)
         })
+    }
+
+    override fun findByUuid(uuid: String): ProjectDeliverableModel? {
+        return mock(mockedDatabase.find { m -> m.reference.uuid == uuid })
     }
 
     override fun findSuccessors(deliverable: ProjectDeliverableModel): Collection<ProjectDeliverableModel> {

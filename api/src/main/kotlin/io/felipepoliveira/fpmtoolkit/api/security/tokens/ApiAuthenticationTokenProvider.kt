@@ -8,7 +8,7 @@ import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.security.tokens.TokensMetadata
 import org.springframework.stereotype.Component
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 private const val SUBJECT: String = "UserAuthenticationToken/1.0"
 private const val CLAIM_CLIENT_IDENTIFIER: String = "clientIdentifier"

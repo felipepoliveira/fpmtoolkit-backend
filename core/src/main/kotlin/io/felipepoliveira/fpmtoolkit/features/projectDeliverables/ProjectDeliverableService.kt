@@ -3,15 +3,14 @@ package io.felipepoliveira.fpmtoolkit.features.projectDeliverables
 import io.felipepoliveira.fpmtoolkit.BaseService
 import io.felipepoliveira.fpmtoolkit.BusinessRuleException
 import io.felipepoliveira.fpmtoolkit.BusinessRulesError
+import io.felipepoliveira.fpmtoolkit.dao.Pagination
 import io.felipepoliveira.fpmtoolkit.ext.addError
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberRoles
 import io.felipepoliveira.fpmtoolkit.features.organizationMembers.OrganizationMemberService
-import io.felipepoliveira.fpmtoolkit.features.organizations.OrganizationModel
 import io.felipepoliveira.fpmtoolkit.features.projectDeliverables.dao.CreateOrUpdateProjectDeliverableDTO
 import io.felipepoliveira.fpmtoolkit.features.projectMembers.ProjectMemberService
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectModel
 import io.felipepoliveira.fpmtoolkit.features.projects.ProjectService
-import io.felipepoliveira.fpmtoolkit.features.users.UserModel
 import io.felipepoliveira.fpmtoolkit.features.users.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -30,7 +29,11 @@ class ProjectDeliverableService @Autowired constructor (
     smartValidator: SmartValidator
 ) : BaseService(smartValidator) {
 
-    private fun businessRulesValidationsOnDTO(
+    companion object {
+        const val PAGINATION_LIMIT = 30
+    }
+
+    private fun businessRulesValidationsOnCreateDTO(
         dto: CreateOrUpdateProjectDeliverableDTO,
         validationResult: BindingResult): BindingResult {
 
@@ -55,14 +58,44 @@ class ProjectDeliverableService @Autowired constructor (
         return validationResult
     }
 
+    private fun validatePredecessorRedundancy(
+        dto: CreateOrUpdateProjectDeliverableDTO,
+        validationResult: BindingResult,
+        updatedDeliverable: ProjectDeliverableModel
+    ): BindingResult {
+        // if any of the predecessors on DTO already have a reference of the updatedDeliverable as a predecessor throw
+        // an error
+        val deepPredecessors = updatedDeliverable.predecessors.filter { p -> p.isDeepPredecessor(updatedDeliverable) }
+        if (deepPredecessors.isNotEmpty()) {
+            for (badPredecessor in deepPredecessors) {
+
+                // identify the index of the bad predecessors on DTO
+                val indexOfBadPredecessor = dto.predecessors.indexOfFirst { it == badPredecessor.uuid }
+                if (indexOfBadPredecessor < 0) {
+                    continue
+                }
+
+                // add the validation error
+                validationResult.addError(
+                    "predecessors[$indexOfBadPredecessor]",
+                    "Predecessor '${badPredecessor.name}' identified by '${badPredecessor.uuid}' " +
+                            "already has a predecessor of the updated deliverable '${updatedDeliverable.name}'"
+                )
+            }
+        }
+
+
+        return validationResult
+    }
+
     @Transactional
-    internal fun createDeliverable(
+    fun createDeliverable(
         requesterUuid: String,
         projectUuid: String,
         dto: CreateOrUpdateProjectDeliverableDTO,
     ): ProjectDeliverableModel {
         // validate DTO
-        val validationResult =  businessRulesValidationsOnDTO(dto, validate(dto))
+        val validationResult =  businessRulesValidationsOnCreateDTO(dto, validate(dto))
         if (validationResult.hasErrors()) {
             throw BusinessRuleException(validationResult)
         }
@@ -104,6 +137,53 @@ class ProjectDeliverableService @Autowired constructor (
     }
 
     /**
+     * Find all ProjectDeliverableModel owned by the project identified by projectUuid. This method
+     * uses pagination
+     */
+    fun findByProject(
+        requesterUuid: String, projectUuid: String, limit: Int, page: Int, query: String?
+    ): Collection<ProjectDeliverableModel> {
+
+        // assert that the given requester is a member of the organization that owns the project
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val project = projectService.findByUuid(projectUuid)
+        organizationMemberService.findByOrganizationAndUserOrForbidden(project.owner, requester)
+
+        return projectDeliverableDAO.findByProject(
+            project,
+            limit.coerceIn(1..PAGINATION_LIMIT),
+            page.coerceAtLeast(1),
+            query
+            )
+    }
+
+    /**
+     * Return pagination metadata of all ProjectDeliverableModel owned by the project identified by projectUuid
+     */
+    fun paginationByProject(
+        requesterUuid: String, projectUuid: String, limit: Int, query: String?
+    ): Pagination {
+
+        // assert that the given requester is a member of the organization that owns the project
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val project = projectService.findByUuid(projectUuid)
+        organizationMemberService.findByOrganizationAndUserOrForbidden(project.owner, requester)
+
+        return projectDeliverableDAO.paginationByProject(
+            project,
+            limit.coerceIn(1..PAGINATION_LIMIT),
+            query
+        )
+    }
+
+    fun findByUuid(uuid: String): ProjectDeliverableModel {
+        return projectDeliverableDAO.findByUuid(uuid) ?: throw BusinessRuleException(
+            BusinessRulesError.NOT_FOUND,
+            "Could not find deliverable identified by '$uuid'"
+        )
+    }
+
+    /**
      * Find all deliverables identified by the given UUID and project. If any of the given UUID is not found
      * an BusinessRuleException(NOT_FOUND) will be thrown
      */
@@ -130,5 +210,61 @@ class ProjectDeliverableService @Autowired constructor (
         }
 
         return deliverables
+    }
+
+    /**
+     * TODO Unit tests pending on updateDeliverable
+     *
+     */
+    @Transactional
+    fun updateDeliverable(
+        requesterUuid: String,
+        deliverableUuid: String,
+        dto: CreateOrUpdateProjectDeliverableDTO,
+    ): ProjectDeliverableModel {
+        // validate DTO
+        val validationResult =  businessRulesValidationsOnCreateDTO(dto, validate(dto))
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        val requester = userService.assertFindByUuid(requesterUuid)
+        val deliverable = findByUuid(deliverableUuid)
+
+        // check membership authorization
+        organizationMemberService.findByOrganizationAndUserOrForbidden(deliverable.project.owner, requester)
+            .assertIsOwnerOrOrganizationAdministratorOr(OrganizationMemberRoles.ORG_PROJECT_ADMINISTRATOR)
+
+        // check if there is no duplicated name
+        val duplicatedDeliverable = projectDeliverableDAO.findByNameAndProject(dto.name, deliverable.project)
+        if (duplicatedDeliverable != null && duplicatedDeliverable.id != deliverable.id) {
+            validationResult.addError("name", "Name '${dto.name}' is already used by another deliverable")
+        }
+
+        // check for business rule validation errors
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        // Update the deliverable
+        deliverable.apply {
+            name = dto.name
+            factualStartDate = dto.factualStartDate
+            expectedStartDate = dto.expectedStartDate
+            factualEndDate = dto.factualEndDate
+            expectedEndDate = dto.expectedEndDate
+            predecessors = findByUuid(project, dto.predecessors)
+            responsible = projectMemberService.findByProjectAndUuid(project, dto.responsible)
+        }
+
+        // check for redundancy errors
+        validatePredecessorRedundancy(dto, validationResult, deliverable)
+        if (validationResult.hasErrors()) {
+            throw BusinessRuleException(validationResult)
+        }
+
+        projectDeliverableDAO.update(deliverable)
+
+        return deliverable
     }
 }

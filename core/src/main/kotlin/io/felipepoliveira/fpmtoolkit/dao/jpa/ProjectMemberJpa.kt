@@ -72,7 +72,7 @@ class ProjectMemberJpa : ProjectMemberDAO, BaseJpa<Long, ProjectMemberModel>() {
     ): Collection<ProjectMemberModel> {
         return query("m")
             .where("m.project.id = :projectId")
-            .and("m.uuid = :uuids")
+            .and("m.uuid IN :uuids")
             .setParameter("projectId", project.id)
             .setParameter("uuids", uuids)
             .prepare()
